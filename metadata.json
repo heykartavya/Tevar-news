@@ -1,0 +1,6 @@
+{
+  "name": "Tevar News",
+  "description": "A fully equipped, classy, and market-ready news portal featuring intuitive navigation and optimized ad placements.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

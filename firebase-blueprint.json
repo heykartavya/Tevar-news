@@ -1,0 +1,24 @@
+{
+  "description": "Blueprint for Tevar News Portal",
+  "collections": [
+    {
+      "name": "articles",
+      "description": "Stores news articles",
+      "rules": "Anyone can read articles. Only authenticated users can create, update, or delete articles.",
+      "indexes": [
+        {
+          "fields": [
+            { "fieldPath": "category", "order": "ASCENDING" },
+            { "fieldPath": "date", "order": "DESCENDING" }
+          ]
+        },
+        {
+          "fields": [
+            { "fieldPath": "isTrending", "order": "ASCENDING" },
+            { "fieldPath": "date", "order": "DESCENDING" }
+          ]
+        }
+      ]
+    }
+  ]
+}

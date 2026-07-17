@@ -1,0 +1,11 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /articles/{articleId} {
+      // Anyone can read articles
+      allow read: if true;
+      // Only authenticated users can write (assuming authors are authenticated)
+      allow create, update, delete: if request.auth != null;
+    }
+  }
+}
