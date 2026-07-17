@@ -3,16 +3,21 @@ import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
 import { AdSpace } from '../components/AdSpace';
 import { ArticleCard } from '../components/ArticleCard';
+import { ArticleModal } from '../components/ArticleModal';
+import { HeroSkeleton, GridSkeleton, CompactSkeleton, TrendingSkeleton } from '../components/ArticleSkeleton';
 import { Category, Article } from '../types';
 import { MOCK_ARTICLES } from '../data';
 import { TrendingUp } from 'lucide-react';
 import { getArticles } from '../lib/db';
+import { useLanguage } from '../lib/LanguageContext';
 
 export const Home: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState<Category>('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
+  const { language, t, l } = useLanguage();
 
   useEffect(() => {
     const fetchArticles = async () => {
@@ -75,8 +80,67 @@ export const Home: React.FC = () => {
           </div>
 
           {loading ? (
-            <div className="flex justify-center items-center py-20">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-700"></div>
+            <div className="grid grid-cols-12 gap-8 lg:gap-12">
+              <div className="col-span-12 lg:col-span-8">
+                <div className="mb-10">
+                  <HeroSkeleton />
+                </div>
+                <div className="my-10 hidden sm:block">
+                  <AdSpace format="leaderboard" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-10 border-t border-gray-200 pt-8">
+                  <GridSkeleton />
+                  <GridSkeleton />
+                  <GridSkeleton />
+                  <GridSkeleton />
+                </div>
+              </div>
+              <aside className="col-span-12 lg:col-span-4 space-y-10">
+                <div>
+                  <AdSpace format="rectangle" />
+                </div>
+                <div className="bg-gray-50 p-6 border border-gray-100">
+                  <div className="flex items-center space-x-2 mb-6 border-b border-gray-200 pb-3">
+                    <TrendingUp className="text-red-700 text-opacity-50" size={20} />
+                    <h3 className="font-serif text-xl font-bold text-gray-400">{t('home.trendingNow')}</h3>
+                  </div>
+                  <div className="flex flex-col space-y-6">
+                    <TrendingSkeleton />
+                    <TrendingSkeleton />
+                    <TrendingSkeleton />
+                    <TrendingSkeleton />
+                  </div>
+                </div>
+                <div className="bg-zinc-900 text-white p-6 rounded-sm shadow-xl">
+                  <h3 className="font-serif text-2xl font-bold mb-2 text-white">{t('home.theDailyBrief')}</h3>
+                  <p className="font-sans text-sm text-zinc-400 mb-6">
+                    {t('home.newsletterDesc')}
+                  </p>
+                  <div className="space-y-3">
+                    <input 
+                      disabled
+                      type="email" 
+                      placeholder="Your email address" 
+                      className="w-full bg-zinc-800 border-none rounded-sm px-4 py-3 text-sm font-sans focus:outline-none focus:ring-2 focus:ring-red-600 transition-all text-white placeholder-zinc-500 opacity-50 cursor-not-allowed"
+                    />
+                    <button disabled className="w-full bg-red-700 bg-opacity-50 text-white font-sans font-bold text-sm py-3 rounded-sm opacity-50 cursor-not-allowed">
+                      {t('home.signUpFree')}
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-zinc-500 mt-4 text-center">
+                    {t('home.terms')}
+                  </p>
+                </div>
+                <div>
+                  <h3 className="font-sans font-bold uppercase tracking-wider text-sm mb-4 border-b border-black pb-2 text-gray-400">{t('home.editorsPicks')}</h3>
+                  <CompactSkeleton />
+                  <CompactSkeleton />
+                  <CompactSkeleton />
+                </div>
+                <div className="sticky top-24 pt-4">
+                  <AdSpace format="rectangle" />
+                </div>
+              </aside>
             </div>
           ) : displayedArticles.length === 0 ? (
             <div className="py-20 text-center text-gray-500 font-sans">
@@ -89,7 +153,7 @@ export const Home: React.FC = () => {
                 {/* Hero Section */}
                 {heroArticle && (
                   <div className="mb-10">
-                    <ArticleCard article={heroArticle} featured={true} />
+                    <ArticleCard article={heroArticle} featured={true} onClick={setSelectedArticle} />
                   </div>
                 )}
 
@@ -101,7 +165,7 @@ export const Home: React.FC = () => {
                 {/* Articles Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-10 border-t border-gray-200 pt-8">
                   {gridArticles.map(article => (
-                    <ArticleCard key={article.id} article={article} />
+                    <ArticleCard key={article.id} article={article} onClick={setSelectedArticle} />
                   ))}
                 </div>
               </div>
@@ -118,17 +182,17 @@ export const Home: React.FC = () => {
                   <div className="bg-gray-50 p-6 border border-gray-100">
                     <div className="flex items-center space-x-2 mb-6 border-b border-gray-200 pb-3">
                       <TrendingUp className="text-red-700" size={20} />
-                      <h3 className="font-serif text-xl font-bold text-gray-900">Trending Now</h3>
+                      <h3 className="font-serif text-xl font-bold text-gray-900">{t('home.trendingNow')}</h3>
                     </div>
                     <div className="flex flex-col space-y-4">
                       {trendingArticles.map((article, index) => (
-                        <div key={article.id} className="group cursor-pointer flex gap-4">
+                        <div key={article.id} className="group cursor-pointer flex gap-4" onClick={() => setSelectedArticle(article)}>
                           <span className="font-serif text-4xl font-black text-gray-200 group-hover:text-red-200 transition-colors">
                             {index + 1}
                           </span>
                           <div className="pt-2">
                             <h4 className="font-serif font-bold text-gray-900 leading-snug group-hover:text-red-700 transition-colors line-clamp-2">
-                              {article.title}
+                              {l(article, 'title')}
                             </h4>
                           </div>
                         </div>
@@ -139,9 +203,9 @@ export const Home: React.FC = () => {
 
                 {/* Newsletter Widget */}
                 <div className="bg-zinc-900 text-white p-6 rounded-sm shadow-xl">
-                  <h3 className="font-serif text-2xl font-bold mb-2 text-white">The Daily Brief</h3>
+                  <h3 className="font-serif text-2xl font-bold mb-2 text-white">{t('home.theDailyBrief')}</h3>
                   <p className="font-sans text-sm text-zinc-400 mb-6">
-                    Expert analysis and breaking news, delivered to your inbox every morning.
+                    {t('home.newsletterDesc')}
                   </p>
                   <div className="space-y-3">
                     <input 
@@ -150,20 +214,20 @@ export const Home: React.FC = () => {
                       className="w-full bg-zinc-800 border-none rounded-sm px-4 py-3 text-sm font-sans focus:outline-none focus:ring-2 focus:ring-red-600 transition-all text-white placeholder-zinc-500"
                     />
                     <button className="w-full bg-red-700 text-white font-sans font-bold text-sm py-3 rounded-sm hover:bg-red-600 transition-colors">
-                      Sign Up Free
+                      {t('home.signUpFree')}
                     </button>
                   </div>
                   <p className="text-[10px] text-zinc-500 mt-4 text-center">
-                    By subscribing, you agree to our Terms of Service.
+                    {t('home.terms')}
                   </p>
                 </div>
 
                 {/* More News (Compact list) */}
                 {displayedArticles.length > 1 && (
                   <div>
-                    <h3 className="font-sans font-bold uppercase tracking-wider text-sm mb-4 border-b border-black pb-2">Editor's Picks</h3>
+                    <h3 className="font-sans font-bold uppercase tracking-wider text-sm mb-4 border-b border-black pb-2">{t('home.editorsPicks')}</h3>
                     {displayedArticles.slice(1, 4).map(article => (
-                      <ArticleCard key={`compact-${article.id}`} article={article} compact={true} />
+                      <ArticleCard key={`compact-${article.id}`} article={article} compact={true} onClick={setSelectedArticle} />
                     ))}
                   </div>
                 )}
@@ -179,6 +243,9 @@ export const Home: React.FC = () => {
       </main>
 
       <Footer />
+      {selectedArticle && (
+        <ArticleModal article={selectedArticle} onClose={() => setSelectedArticle(null)} />
+      )}
     </div>
   );
 };

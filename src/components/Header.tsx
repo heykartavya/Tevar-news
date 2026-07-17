@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Menu, User, Bell, X } from 'lucide-react';
-import { Category } from '../types';
+import { Search, Menu, User, Bell, X, Globe } from 'lucide-react';
+import { Category, SiteLanguage } from '../types';
 import { CATEGORIES } from '../data';
+import { useLanguage } from '../lib/LanguageContext';
 
 interface HeaderProps {
   activeCategory: string;
@@ -13,6 +14,7 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({ activeCategory, onCategoryChange, searchQuery, onSearchChange }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { language, setLanguage, t } = useLanguage();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -26,11 +28,23 @@ export const Header: React.FC<HeaderProps> = ({ activeCategory, onCategoryChange
     <header className="w-full bg-white relative z-50">
       {/* Top Bar - Date and Utility Links */}
       <div className="hidden md:flex justify-between items-center px-6 py-1 border-b border-gray-100 text-xs font-sans text-gray-500 uppercase tracking-wider">
-        <span>{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
-        <div className="flex space-x-6">
+        <span>{new Date().toLocaleDateString(language === 'hi' ? 'hi-IN' : 'en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+        <div className="flex items-center space-x-6">
           <a href="#" className="hover:text-black transition-colors">Newsletters</a>
           <a href="#" className="hover:text-black transition-colors">Podcasts</a>
           <a href="#" className="hover:text-black transition-colors text-red-600 font-semibold">Subscribe</a>
+          <div className="flex items-center space-x-2 border-l border-gray-300 pl-4">
+            <Globe size={14} />
+            <select 
+              value={language}
+              onChange={(e) => setLanguage(e.target.value as SiteLanguage)}
+              className="bg-transparent border-none focus:outline-none cursor-pointer uppercase text-xs"
+            >
+              <option value="en">EN</option>
+              <option value="hinglish">Hinglish</option>
+              <option value="hi">हिंदी</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -50,7 +64,7 @@ export const Header: React.FC<HeaderProps> = ({ activeCategory, onCategoryChange
               <Search size={20} className="text-gray-500 absolute left-3 pointer-events-none" />
               <input 
                 type="text"
-                placeholder="Search..."
+                placeholder={t('home.search')}
                 value={searchQuery}
                 onChange={(e) => onSearchChange(e.target.value)}
                 className="pl-10 pr-4 py-2 bg-gray-100 border border-transparent rounded-full text-sm font-sans focus:bg-white focus:border-gray-300 focus:outline-none focus:ring-1 focus:ring-gray-300 transition-all w-32 focus:w-64 placeholder-gray-500"
@@ -75,6 +89,18 @@ export const Header: React.FC<HeaderProps> = ({ activeCategory, onCategoryChange
               <User size={20} />
               <span className="font-sans text-sm font-medium hidden lg:block">Sign In</span>
             </button>
+            {/* Mobile language toggle */}
+            <div className="md:hidden flex items-center">
+              <select 
+                value={language}
+                onChange={(e) => setLanguage(e.target.value as SiteLanguage)}
+                className="bg-transparent border-none focus:outline-none cursor-pointer uppercase text-xs font-bold text-gray-600"
+              >
+                <option value="en">EN</option>
+                <option value="hinglish">Hing</option>
+                <option value="hi">HI</option>
+              </select>
+            </div>
           </div>
         </div>
       </div>
@@ -93,7 +119,7 @@ export const Header: React.FC<HeaderProps> = ({ activeCategory, onCategoryChange
                       : 'text-gray-600 hover:text-black font-medium'
                   }`}
                 >
-                  {category}
+                  {t(`nav.${category.toLowerCase()}`)}
                 </button>
               </li>
             ))}
@@ -118,7 +144,7 @@ export const Header: React.FC<HeaderProps> = ({ activeCategory, onCategoryChange
                   <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
                   <input 
                     type="text" 
-                    placeholder="Search news..."
+                    placeholder={t('home.search')}
                     value={searchQuery}
                     onChange={(e) => onSearchChange(e.target.value)}
                     className="w-full bg-gray-100 rounded-full py-2 pl-10 pr-4 text-sm font-sans focus:outline-none focus:ring-2 focus:ring-red-500/20"
@@ -139,7 +165,7 @@ export const Header: React.FC<HeaderProps> = ({ activeCategory, onCategoryChange
                           : 'text-gray-700 hover:bg-gray-50'
                       }`}
                     >
-                      {category}
+                      {t(`nav.${category.toLowerCase()}`)}
                     </button>
                   </li>
                 ))}

@@ -17,8 +17,9 @@ export const Admin: React.FC = () => {
   const [loading, setLoading] = useState(true);
   
   const [newArticle, setNewArticle] = useState<Partial<Article>>({
-    title: '', excerpt: '', category: 'World', author: '', date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }), imageUrl: '', readTime: '5 min read', isTrending: false
+    title: '', excerpt: '', content: '', category: 'World', author: '', date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }), imageUrl: '', readTime: '5 min read', isTrending: false
   });
+  const [translating, setTranslating] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -62,15 +63,46 @@ export const Admin: React.FC = () => {
 
   const handleAddArticle = async (e: React.FormEvent) => {
     e.preventDefault();
+    setTranslating(true);
     try {
-      await addArticle(newArticle as Omit<Article, 'id'>);
+      // Auto-translate using the API
+      const res = await fetch('/api/translate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: newArticle.title,
+          excerpt: newArticle.excerpt,
+          content: newArticle.content || ''
+        })
+      });
+      
+      if (!res.ok) {
+        throw new Error('Translation failed');
+      }
+      
+      const translation = await res.json();
+      
+      const articleToSave = {
+        ...newArticle,
+        titleEn: translation.titleEn,
+        titleHi: translation.titleHi,
+        excerptEn: translation.excerptEn,
+        excerptHi: translation.excerptHi,
+        contentEn: translation.contentEn,
+        contentHi: translation.contentHi,
+        originalLanguage: translation.detectedLanguage
+      };
+
+      await addArticle(articleToSave as Omit<Article, 'id'>);
       setNewArticle({
-        title: '', excerpt: '', category: 'World', author: '', date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }), imageUrl: '', readTime: '5 min read', isTrending: false
+        title: '', excerpt: '', content: '', category: 'World', author: '', date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }), imageUrl: '', readTime: '5 min read', isTrending: false
       });
       fetchArticles();
     } catch (err) {
       console.error(err);
-      alert('Error adding article');
+      alert('Error adding article. Check server logs.');
+    } finally {
+      setTranslating(false);
     }
   };
 
@@ -188,6 +220,11 @@ export const Admin: React.FC = () => {
                   <textarea required rows={3} value={newArticle.excerpt} onChange={e => setNewArticle({...newArticle, excerpt: e.target.value})} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm" />
                 </div>
                 
+                <div className="sm:col-span-6">
+                  <label className="block text-sm font-medium text-gray-700">Content (Markdown/Text)</label>
+                  <textarea required rows={6} value={newArticle.content || ''} onChange={e => setNewArticle({...newArticle, content: e.target.value})} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm" />
+                </div>
+                
                 <div className="sm:col-span-2">
                   <label className="block text-sm font-medium text-gray-700">Author</label>
                   <input type="text" required value={newArticle.author} onChange={e => setNewArticle({...newArticle, author: e.target.value})} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm" />
@@ -208,8 +245,8 @@ export const Admin: React.FC = () => {
                 </div>
 
                 <div className="sm:col-span-6 flex justify-end">
-                  <button type="submit" className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-700 hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
-                    <Plus size={16} className="mr-2" /> Publish Article
+                  <button type="submit" disabled={translating} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-700 hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50">
+                    <Plus size={16} className="mr-2" /> {translating ? 'Translating & Publishing...' : 'Publish Article'}
                   </button>
                 </div>
               </form>
