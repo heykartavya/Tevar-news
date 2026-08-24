@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { PostBlock } from '../types';
 import { ArrowUp, ArrowDown, Trash2, Image as ImageIcon, Type, Video, Plus } from 'lucide-react';
-import { compressImage } from '../lib/imageCompressor';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
+import { ImageUploader } from './ImageUploader';
 
 interface BlockEditorProps {
   blocks: PostBlock[];
@@ -37,15 +37,6 @@ export const BlockEditor: React.FC<BlockEditorProps> = ({ blocks, onChange }) =>
     onChange(newBlocks);
   };
 
-  const handleImageUpload = async (id: string, file: File) => {
-    try {
-      const base64 = await compressImage(file);
-      updateBlock(id, base64);
-    } catch (e) {
-      console.error('Error compressing image', e);
-    }
-  };
-
   return (
     <div className="space-y-4">
       <div className="flex gap-2 mb-4 bg-gray-50 p-2 rounded-lg border border-gray-200">
@@ -72,8 +63,8 @@ export const BlockEditor: React.FC<BlockEditorProps> = ({ blocks, onChange }) =>
               </button>
             </div>
             
-            <div className="absolute right-4 top-4">
-              <button type="button" onClick={() => removeBlock(block.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors">
+            <div className="absolute right-4 top-4 z-10">
+              <button type="button" onClick={() => removeBlock(block.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors bg-white shadow-sm border border-gray-200">
                 <Trash2 size={16} />
               </button>
             </div>
@@ -93,35 +84,12 @@ export const BlockEditor: React.FC<BlockEditorProps> = ({ blocks, onChange }) =>
 
               {block.type === 'image' && (
                 <div>
-                  <label className="block text-xs font-semibold text-gray-500 uppercase mb-2">Image Block</label>
-                  {!block.content ? (
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer relative">
-                      <input 
-                        type="file" 
-                        accept="image/*" 
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                        onChange={(e) => {
-                          if (e.target.files?.[0]) {
-                            handleImageUpload(block.id, e.target.files[0]);
-                          }
-                        }}
-                      />
-                      <ImageIcon className="mx-auto text-gray-400 mb-2" size={32} />
-                      <p className="text-sm text-gray-600 font-medium">Click or drag image to upload</p>
-                      <p className="text-xs text-gray-500 mt-1">JPEG, PNG, WEBP (Max 1MB after compression)</p>
-                    </div>
-                  ) : (
-                    <div className="relative group/image inline-block max-w-full">
-                      <img src={block.content} alt="Block image" className="max-h-80 object-contain rounded border border-gray-200" />
-                      <button 
-                        type="button" 
-                        onClick={() => updateBlock(block.id, '')}
-                        className="absolute top-2 right-2 bg-black/60 text-white p-1.5 rounded-full opacity-0 group-hover/image:opacity-100 transition-opacity hover:bg-black/80"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  )}
+                  <label className="block text-xs font-semibold text-gray-500 uppercase mb-2">Image Block (Cloudinary)</label>
+                  <ImageUploader 
+                    defaultImage={block.content}
+                    onUploadSuccess={(url) => updateBlock(block.id, url)}
+                    onUploadError={(err) => alert(`Upload failed: ${err}`)}
+                  />
                 </div>
               )}
 
@@ -153,6 +121,7 @@ export const BlockEditor: React.FC<BlockEditorProps> = ({ blocks, onChange }) =>
             </div>
           </div>
         ))}
+
         {blocks.length === 0 && (
           <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
             <p className="text-gray-500 text-sm">No blocks added yet. Click the buttons above to start building your post.</p>
