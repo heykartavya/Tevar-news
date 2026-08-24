@@ -2,6 +2,19 @@ import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
+import { v2 as cloudinary } from 'cloudinary';
+import multer from 'multer';
+
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+// Configure Multer for memory storage
+const upload = multer({ storage: multer.memoryStorage() });
+
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -17,6 +30,39 @@ const ai = new GoogleGenAI({
     headers: {
       'User-Agent': 'aistudio-build',
     }
+  }
+});
+
+
+// Image Upload Route using Cloudinary
+app.post("/api/upload", upload.single('image'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No image file provided." });
+    }
+
+    // Check if Cloudinary is configured
+    if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+      return res.status(500).json({ error: "Cloudinary is not configured on the server." });
+    }
+
+    // Convert buffer to base64
+    const b64 = Buffer.from(req.file.buffer).toString('base64');
+    let dataURI = "data:" + req.file.mimetype + ";base64," + b64;
+
+    // Upload to Cloudinary
+    const result = await cloudinary.uploader.upload(dataURI, {
+      folder: "tevarnews", // Optional: organizes images in a folder
+      resource_type: "auto",
+    });
+
+    res.json({ 
+      url: result.secure_url,
+      public_id: result.public_id
+    });
+  } catch (error) {
+    console.error("Upload error:", error);
+    res.status(500).json({ error: "Failed to upload image." });
   }
 });
 
