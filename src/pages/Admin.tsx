@@ -79,7 +79,7 @@ export const Admin: React.FC = () => {
       });
       
       if (!res.ok) {
-        throw new Error('Translation failed');
+        const errData = await res.json().catch(()=>({})); throw new Error(errData.error || 'Translation failed');
       }
       
       const translation = await res.json();
@@ -98,7 +98,7 @@ export const Admin: React.FC = () => {
       const firstImageBlock = translatedBlocks.find(b => b.type === 'image' && b.content);
       const imageUrl = firstImageBlock ? firstImageBlock.content : 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&q=80&w=1000'; // Default news fallback image
 
-      const articleToSave = {
+      const rawArticle = {
         ...newArticle,
         blocks: translatedBlocks,
         imageUrl,
@@ -106,10 +106,15 @@ export const Admin: React.FC = () => {
         titleHi: translation.titleHi,
         excerptEn: translation.excerptEn,
         excerptHi: translation.excerptHi,
-        contentEn: translation.contentEn,
-        contentHi: translation.contentHi,
-        originalLanguage: translation.detectedLanguage
+        contentEn: translation.contentEn || '',
+        contentHi: translation.contentHi || '',
+        originalLanguage: translation.detectedLanguage || 'Hinglish'
       };
+      
+      // Strip undefined values to prevent Firestore errors
+      const articleToSave = Object.fromEntries(
+        Object.entries(rawArticle).filter(([_, v]) => v !== undefined)
+      );
 
       await addArticle(articleToSave as Omit<Article, 'id'>);
       setNewArticle({
@@ -118,7 +123,7 @@ export const Admin: React.FC = () => {
       fetchArticles();
     } catch (err) {
       console.error(err);
-      alert('Error adding article. Check server logs.');
+      alert(`Error adding article: ${err instanceof Error ? err.message : JSON.stringify(err)}`);
     } finally {
       setTranslating(false);
     }

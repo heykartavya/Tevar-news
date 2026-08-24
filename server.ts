@@ -150,7 +150,7 @@ For the blocks, translate only the 'content' field if the type is 'text'. For 'i
     res.json(result);
   } catch (error) {
     console.error("Translation error:", error);
-    res.status(500).json({ error: "Failed to translate article." });
+    res.status(500).json({ error: "Failed to translate article. " + (error instanceof Error ? error.message : String(error)) });
   }
 });
 
