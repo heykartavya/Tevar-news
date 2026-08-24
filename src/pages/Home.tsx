@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
 import { AdSpace } from '../components/AdSpace';
 import { ArticleCard } from '../components/ArticleCard';
-import { ArticleModal } from '../components/ArticleModal';
 import { HeroSkeleton, GridSkeleton, CompactSkeleton, TrendingSkeleton } from '../components/ArticleSkeleton';
 import { Category, Article } from '../types';
 import { MOCK_ARTICLES } from '../data';
@@ -12,22 +12,24 @@ import { getArticles } from '../lib/db';
 import { useLanguage } from '../lib/LanguageContext';
 
 export const Home: React.FC = () => {
+  const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState<Category>('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
   const { language, t, l } = useLanguage();
 
   useEffect(() => {
     const fetchArticles = async () => {
       try {
         const fetchedArticles = await getArticles();
-        if (fetchedArticles.length > 0) {
+        if (fetchedArticles.length > 10) {
           setArticles(fetchedArticles);
         } else {
-          // Fallback to mock data if DB is empty for demo purposes
-          setArticles(MOCK_ARTICLES);
+          // Fallback/merge with mock data to keep the site lively
+          const existingTitles = new Set(fetchedArticles.map(a => a.title));
+          const mockToAdd = MOCK_ARTICLES.filter(m => !existingTitles.has(m.title));
+          setArticles([...fetchedArticles, ...mockToAdd]);
         }
       } catch (error) {
         console.error("Error fetching articles:", error);
@@ -153,7 +155,7 @@ export const Home: React.FC = () => {
                 {/* Hero Section */}
                 {heroArticle && (
                   <div className="mb-10">
-                    <ArticleCard article={heroArticle} featured={true} onClick={setSelectedArticle} />
+                    <ArticleCard article={heroArticle} featured={true} onClick={(article) => navigate(`/article/${article.id}`)} />
                   </div>
                 )}
 
@@ -165,7 +167,7 @@ export const Home: React.FC = () => {
                 {/* Articles Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-10 border-t border-gray-200 pt-8">
                   {gridArticles.map(article => (
-                    <ArticleCard key={article.id} article={article} onClick={setSelectedArticle} />
+                    <ArticleCard key={article.id} article={article} onClick={(article) => navigate(`/article/${article.id}`)} />
                   ))}
                 </div>
               </div>
@@ -186,7 +188,7 @@ export const Home: React.FC = () => {
                     </div>
                     <div className="flex flex-col space-y-4">
                       {trendingArticles.map((article, index) => (
-                        <div key={article.id} className="group cursor-pointer flex gap-4" onClick={() => setSelectedArticle(article)}>
+                        <div key={article.id} className="group cursor-pointer flex gap-4 items-start" onClick={() => navigate(`/article/${article.id}`)}>
                           <span className="font-serif text-4xl font-black text-gray-200 group-hover:text-red-200 transition-colors">
                             {index + 1}
                           </span>
@@ -227,7 +229,7 @@ export const Home: React.FC = () => {
                   <div>
                     <h3 className="font-sans font-bold uppercase tracking-wider text-sm mb-4 border-b border-black pb-2">{t('home.editorsPicks')}</h3>
                     {displayedArticles.slice(1, 4).map(article => (
-                      <ArticleCard key={`compact-${article.id}`} article={article} compact={true} onClick={setSelectedArticle} />
+                      <ArticleCard key={`compact-${article.id}`} article={article} compact={true} onClick={(article) => navigate(`/article/${article.id}`)} />
                     ))}
                   </div>
                 )}
@@ -243,9 +245,6 @@ export const Home: React.FC = () => {
       </main>
 
       <Footer />
-      {selectedArticle && (
-        <ArticleModal article={selectedArticle} onClose={() => setSelectedArticle(null)} />
-      )}
     </div>
   );
 };

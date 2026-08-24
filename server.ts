@@ -9,7 +9,7 @@ dotenv.config();
 const app = express();
 const PORT = 3000;
 
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
 
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
@@ -23,11 +23,17 @@ const ai = new GoogleGenAI({
 // Translation API Route
 app.post("/api/translate", async (req, res) => {
   try {
-    const { title, excerpt, content } = req.body;
+    const { title, excerpt, content, blocks } = req.body;
     
-    if (!title || !excerpt || !content) {
+    if (!title || !excerpt) {
       return res.status(400).json({ error: "Missing required fields." });
     }
+
+    // Strip large base64 image data before sending to AI to avoid token limits
+    const sanitizedBlocks = (blocks || []).map((b: any) => ({
+      ...b,
+      content: b.type === 'image' ? '[IMAGE_DATA_REMOVED_FOR_TRANSLATION]' : b.content
+    }));
 
     const prompt = `
 Translate the following news article into Hindi and English.
@@ -36,7 +42,10 @@ Return a JSON object containing the translations.
 
 Original Title: ${title}
 Original Excerpt: ${excerpt}
-Original Content: ${content}
+Original Content: ${content || 'N/A'}
+Original Blocks JSON: ${blocks ? JSON.stringify(sanitizedBlocks) : 'N/A'}
+
+For the blocks, translate only the 'content' field if the type is 'text'. For 'image' or 'youtube', copy the block exactly and set the contentHi and contentEn to be the same URL as the original content. Return the full array of translated blocks.
 `;
 
     const response = await ai.models.generateContent({
@@ -57,6 +66,32 @@ Original Content: ${content}
             titleHi: { type: Type.STRING },
             excerptHi: { type: Type.STRING },
             contentHi: { type: Type.STRING },
+            blocksEn: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  id: { type: Type.STRING },
+                  type: { type: Type.STRING },
+                  content: { type: Type.STRING },
+                  contentEn: { type: Type.STRING },
+                  contentHi: { type: Type.STRING }
+                }
+              }
+            },
+            blocksHi: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  id: { type: Type.STRING },
+                  type: { type: Type.STRING },
+                  content: { type: Type.STRING },
+                  contentEn: { type: Type.STRING },
+                  contentHi: { type: Type.STRING }
+                }
+              }
+            }
           },
           required: ["detectedLanguage", "titleEn", "excerptEn", "contentEn", "titleHi", "excerptHi", "contentHi"],
         },

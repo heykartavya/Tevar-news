@@ -1,7 +1,10 @@
 import React from 'react';
 import { Facebook, Twitter, Instagram, Linkedin, Mail } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { useLanguage } from '../lib/LanguageContext';
 
 export const Footer: React.FC = () => {
+  const { t } = useLanguage();
   return (
     <footer className="bg-zinc-950 text-white pt-16 pb-8 border-t-4 border-red-700 mt-20">
       <div className="max-w-7xl mx-auto px-4 md:px-6">
@@ -25,21 +28,22 @@ export const Footer: React.FC = () => {
           <div>
             <h3 className="font-sans font-bold uppercase tracking-wider text-sm mb-4 text-zinc-200">Sections</h3>
             <ul className="space-y-3 font-sans text-sm text-zinc-400">
-              <li><a href="#" className="hover:text-red-400 transition-colors">World News</a></li>
-              <li><a href="#" className="hover:text-red-400 transition-colors">U.S. Politics</a></li>
-              <li><a href="#" className="hover:text-red-400 transition-colors">Business & Tech</a></li>
-              <li><a href="#" className="hover:text-red-400 transition-colors">Science & Health</a></li>
-              <li><a href="#" className="hover:text-red-400 transition-colors">Arts & Culture</a></li>
+              <li><Link to="/" className="hover:text-red-400 transition-colors">{t('nav.national')}</Link></li>
+              <li><Link to="/" className="hover:text-red-400 transition-colors">{t('nav.uttarpradesh')}</Link></li>
+              <li><Link to="/" className="hover:text-red-400 transition-colors">{t('nav.bundelkhand')}</Link></li>
+              <li><Link to="/" className="hover:text-red-400 transition-colors">{t('nav.education')}</Link></li>
+              <li><Link to="/" className="hover:text-red-400 transition-colors">{t('nav.crime')}</Link></li>
             </ul>
           </div>
 
           <div>
-            <h3 className="font-sans font-bold uppercase tracking-wider text-sm mb-4 text-zinc-200">About Us</h3>
+            <h3 className="font-sans font-bold uppercase tracking-wider text-sm mb-4 text-zinc-200">{t('about.title')}</h3>
             <ul className="space-y-3 font-sans text-sm text-zinc-400">
-              <li><a href="#" className="hover:text-white transition-colors">Our Story</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Careers</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Journalistic Ethics</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Contact Directory</a></li>
+              <li><Link to="/about/about-us" className="hover:text-white transition-colors">{t('about.aboutUs')}</Link></li>
+              <li><Link to="/about/contact-us" className="hover:text-white transition-colors">{t('about.contactUs')}</Link></li>
+              <li><Link to="/about/advertise" className="hover:text-white transition-colors">{t('about.advertise')}</Link></li>
+              <li><Link to="/about/privacy-policy" className="hover:text-white transition-colors">{t('about.privacyPolicy')}</Link></li>
+              <li><Link to="/about/grievance" className="hover:text-white transition-colors">{t('about.grievance')}</Link></li>
             </ul>
           </div>
 
@@ -66,8 +70,8 @@ export const Footer: React.FC = () => {
         </div>
 
         <div className="flex flex-col md:flex-row justify-between items-center text-zinc-500 font-sans text-xs">
-          <p>&copy; {new Date().getFullYear()} Tevar News Media. All rights reserved.</p>
-          <div className="flex space-x-6 mt-4 md:mt-0">
+          <p className="text-center md:text-left">&copy; {new Date().getFullYear()} Tevar News Media. All rights reserved.</p>
+          <div className="flex flex-wrap justify-center gap-4 mt-4 md:mt-0">
             <a href="#" className="hover:text-zinc-300">Privacy Policy</a>
             <a href="#" className="hover:text-zinc-300">Terms of Service</a>
             <a href="#" className="hover:text-zinc-300">Ad Choices</a>

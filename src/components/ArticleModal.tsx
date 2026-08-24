@@ -20,13 +20,13 @@ export const ArticleModal: React.FC<ArticleModalProps> = ({ article, onClose }) 
   }, []);
 
   return createPortal(
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 md:p-12">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-0 sm:p-6 md:p-12">
       <div 
         className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       ></div>
       
-      <div className="relative bg-white w-full max-w-4xl max-h-full overflow-y-auto rounded-sm shadow-2xl flex flex-col">
+      <div className="relative bg-white w-full sm:max-w-4xl h-full sm:h-auto sm:max-h-full overflow-y-auto sm:rounded-sm shadow-2xl flex flex-col">
         <button 
           onClick={onClose}
           className="absolute top-4 right-4 z-10 bg-white/80 backdrop-blur-md p-2 rounded-full text-gray-900 hover:bg-gray-100 transition-colors"
@@ -81,7 +81,33 @@ export const ArticleModal: React.FC<ArticleModalProps> = ({ article, onClose }) 
           </div>
 
           <div className="font-serif text-lg text-gray-800 leading-loose space-y-6">
-            {l(article, 'content') ? (
+            {article.blocks && article.blocks.length > 0 ? (
+              article.blocks.map(block => (
+                <div key={block.id} className="mb-6">
+                  {block.type === 'text' && (
+                    <div dangerouslySetInnerHTML={{ __html: l(block, 'content') || '' }} />
+                  )}
+                  {block.type === 'image' && block.content && (
+                    <figure className="my-8">
+                      <img src={block.content} alt="" className="w-full h-auto rounded" />
+                    </figure>
+                  )}
+                  {block.type === 'youtube' && block.content && block.content.includes('youtube.com/watch?v=') && (
+                    <div className="mt-4 aspect-video rounded-md overflow-hidden bg-gray-100 my-8">
+                      <iframe 
+                        width="100%" 
+                        height="100%" 
+                        src={`https://www.youtube.com/embed/${new URL(block.content).searchParams.get('v')}`} 
+                        title="YouTube video player" 
+                        frameBorder="0" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                        allowFullScreen
+                      ></iframe>
+                    </div>
+                  )}
+                </div>
+              ))
+            ) : l(article, 'content') ? (
               <div dangerouslySetInnerHTML={{ __html: l(article, 'content').replace(/\n/g, '<br />') }} />
             ) : (
               <div dangerouslySetInnerHTML={{ __html: article.content ? article.content.replace(/\n/g, '<br />') : '' }} />

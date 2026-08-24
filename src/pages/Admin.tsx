@@ -4,7 +4,8 @@ import { auth } from '../lib/firebase';
 import { getArticles, addArticle, deleteArticle, seedDatabase } from '../lib/db';
 import { Article } from '../types';
 import { CATEGORIES, MOCK_ARTICLES } from '../data';
-import { Trash2, Plus, LogOut, Database } from 'lucide-react';
+import { Trash2, Plus, LogOut, Database, MoveUp, MoveDown } from 'lucide-react';
+import { BlockEditor } from '../components/BlockEditor';
 
 export const Admin: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -17,7 +18,7 @@ export const Admin: React.FC = () => {
   const [loading, setLoading] = useState(true);
   
   const [newArticle, setNewArticle] = useState<Partial<Article>>({
-    title: '', excerpt: '', content: '', category: 'World', author: '', date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }), imageUrl: '', readTime: '5 min read', isTrending: false
+    title: '', excerpt: '', content: '', blocks: [], category: 'World', author: '', date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }), readTime: '5 min read', isTrending: false
   });
   const [translating, setTranslating] = useState(false);
 
@@ -72,7 +73,8 @@ export const Admin: React.FC = () => {
         body: JSON.stringify({
           title: newArticle.title,
           excerpt: newArticle.excerpt,
-          content: newArticle.content || ''
+          content: newArticle.content || '',
+          blocks: newArticle.blocks || []
         })
       });
       
@@ -82,8 +84,24 @@ export const Admin: React.FC = () => {
       
       const translation = await res.json();
       
+      // Merge translated blocks back into the article structure
+      const translatedBlocks = (newArticle.blocks || []).map((block, index) => {
+        const enBlock = translation.blocksEn?.[index] || {};
+        const hiBlock = translation.blocksHi?.[index] || {};
+        return {
+          ...block,
+          contentEn: block.type === 'text' ? (enBlock.contentEn || enBlock.content || block.content) : block.content,
+          contentHi: block.type === 'text' ? (hiBlock.contentHi || hiBlock.content || block.content) : block.content
+        };
+      });
+
+      const firstImageBlock = translatedBlocks.find(b => b.type === 'image' && b.content);
+      const imageUrl = firstImageBlock ? firstImageBlock.content : 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&q=80&w=1000'; // Default news fallback image
+
       const articleToSave = {
         ...newArticle,
+        blocks: translatedBlocks,
+        imageUrl,
         titleEn: translation.titleEn,
         titleHi: translation.titleHi,
         excerptEn: translation.excerptEn,
@@ -95,7 +113,7 @@ export const Admin: React.FC = () => {
 
       await addArticle(articleToSave as Omit<Article, 'id'>);
       setNewArticle({
-        title: '', excerpt: '', content: '', category: 'World', author: '', date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }), imageUrl: '', readTime: '5 min read', isTrending: false
+        title: '', excerpt: '', content: '', blocks: [], category: 'World', author: '', date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }), readTime: '5 min read', isTrending: false
       });
       fetchArticles();
     } catch (err) {
@@ -221,18 +239,13 @@ export const Admin: React.FC = () => {
                 </div>
                 
                 <div className="sm:col-span-6">
-                  <label className="block text-sm font-medium text-gray-700">Content (Markdown/Text)</label>
-                  <textarea required rows={6} value={newArticle.content || ''} onChange={e => setNewArticle({...newArticle, content: e.target.value})} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm" />
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Content Blocks</label>
+                  <BlockEditor blocks={newArticle.blocks || []} onChange={(blocks) => setNewArticle({...newArticle, blocks})} />
                 </div>
                 
                 <div className="sm:col-span-2">
                   <label className="block text-sm font-medium text-gray-700">Author</label>
                   <input type="text" required value={newArticle.author} onChange={e => setNewArticle({...newArticle, author: e.target.value})} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm" />
-                </div>
-
-                <div className="sm:col-span-4">
-                  <label className="block text-sm font-medium text-gray-700">Image URL</label>
-                  <input type="url" required value={newArticle.imageUrl} onChange={e => setNewArticle({...newArticle, imageUrl: e.target.value})} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm" />
                 </div>
 
                 <div className="sm:col-span-2">

@@ -61,7 +61,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article, featured = fa
           <img 
             src={article.imageUrl} 
             alt={l(article, 'title')} 
-            className="w-full h-[400px] object-cover transition-transform duration-700 group-hover:scale-105"
+            className="w-full h-[250px] sm:h-[400px] object-cover transition-transform duration-700 group-hover:scale-105"
           />
           <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
             <ZoomIn className="text-white drop-shadow-lg" size={48} />
@@ -90,7 +90,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article, featured = fa
 
   if (compact) {
     return (
-      <article className="group cursor-pointer flex gap-4 mb-6 border-b border-gray-100 pb-6 last:border-0 last:pb-0" onClick={handleCardClick}>
+      <article className="group cursor-pointer flex gap-4 mb-6 border-b border-gray-100 pb-6 last:border-0 last:pb-0 items-start" onClick={handleCardClick}>
         <div className="flex-1">
           <span className="block font-sans font-bold text-[10px] uppercase tracking-widest text-red-700 mb-1">{t(`nav.${article.category.toLowerCase()}`)}</span>
           <h3 className="font-serif text-lg font-bold leading-snug mb-2 text-gray-900 group-hover:text-red-700 transition-colors">

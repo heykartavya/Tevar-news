@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Menu, User, Bell, X, Globe } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Category, SiteLanguage } from '../types';
 import { CATEGORIES } from '../data';
 import { useLanguage } from '../lib/LanguageContext';
 
 interface HeaderProps {
-  activeCategory: string;
-  onCategoryChange: (category: Category) => void;
-  searchQuery: string;
-  onSearchChange: (query: string) => void;
+  activeCategory?: string;
+  onCategoryChange?: (category: Category) => void;
+  searchQuery?: string;
+  onSearchChange?: (query: string) => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({ activeCategory, onCategoryChange, searchQuery, onSearchChange }) => {
@@ -53,7 +54,7 @@ export const Header: React.FC<HeaderProps> = ({ activeCategory, onCategoryChange
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           
           {/* Left Actions */}
-          <div className="flex items-center space-x-4 w-1/3">
+          <div className="flex items-center space-x-4 flex-1 md:flex-none md:w-1/3">
             <button 
               className="md:hidden text-gray-900"
               onClick={() => setMobileMenuOpen(true)}
@@ -65,22 +66,23 @@ export const Header: React.FC<HeaderProps> = ({ activeCategory, onCategoryChange
               <input 
                 type="text"
                 placeholder={t('home.search')}
-                value={searchQuery}
-                onChange={(e) => onSearchChange(e.target.value)}
-                className="pl-10 pr-4 py-2 bg-gray-100 border border-transparent rounded-full text-sm font-sans focus:bg-white focus:border-gray-300 focus:outline-none focus:ring-1 focus:ring-gray-300 transition-all w-32 focus:w-64 placeholder-gray-500"
+                value={searchQuery || ''}
+                onChange={(e) => onSearchChange?.(e.target.value)}
+                disabled={!onSearchChange}
+                className="pl-10 pr-4 py-2 bg-gray-100 border border-transparent rounded-full text-sm font-sans focus:bg-white focus:border-gray-300 focus:outline-none focus:ring-1 focus:ring-gray-300 transition-all w-32 focus:w-64 placeholder-gray-500 disabled:opacity-50"
               />
             </div>
           </div>
 
           {/* Logo */}
-          <div className="w-1/3 flex justify-center">
-            <h1 className="font-serif text-4xl md:text-5xl font-black tracking-tight text-gray-900 cursor-pointer">
+          <div className="flex-none flex justify-center md:w-1/3">
+            <Link to="/" className="font-serif text-3xl md:text-5xl font-black tracking-tight text-gray-900 cursor-pointer">
               TEVAR<span className="text-red-700">.</span>
-            </h1>
+            </Link>
           </div>
 
           {/* Right Actions */}
-          <div className="flex justify-end items-center space-x-4 w-1/3">
+          <div className="flex justify-end items-center space-x-2 sm:space-x-4 flex-1 md:flex-none md:w-1/3">
             <button className="text-gray-700 hover:text-black hidden sm:block">
               <Bell size={20} />
             </button>
@@ -106,26 +108,28 @@ export const Header: React.FC<HeaderProps> = ({ activeCategory, onCategoryChange
       </div>
 
       {/* Navigation Categories */}
-      <nav className="border-y border-gray-200 hidden md:block">
-        <div className="max-w-7xl mx-auto px-6">
-          <ul className="flex justify-center space-x-8 lg:space-x-12 py-3 overflow-x-auto hide-scrollbar">
-            {CATEGORIES.map((category) => (
-              <li key={category}>
-                <button
-                  onClick={() => onCategoryChange(category as Category)}
-                  className={`font-sans text-sm tracking-wide transition-colors whitespace-nowrap ${
-                    activeCategory === category 
-                      ? 'font-bold text-black border-b-2 border-black pb-1' 
-                      : 'text-gray-600 hover:text-black font-medium'
-                  }`}
-                >
-                  {t(`nav.${category.toLowerCase()}`)}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </nav>
+      {onCategoryChange && (
+        <nav className="border-y border-gray-200 hidden md:block">
+          <div className="max-w-7xl mx-auto px-6">
+            <ul className="flex justify-center space-x-8 lg:space-x-12 py-3 overflow-x-auto hide-scrollbar">
+              {CATEGORIES.map((category) => (
+                <li key={category}>
+                  <button
+                    onClick={() => onCategoryChange(category as Category)}
+                    className={`font-sans text-sm tracking-wide transition-colors whitespace-nowrap ${
+                      activeCategory === category 
+                        ? 'font-bold text-black border-b-2 border-black pb-1' 
+                        : 'text-gray-600 hover:text-black font-medium'
+                    }`}
+                  >
+                    {t(`nav.${category.toLowerCase().replace(/\s+/g, '')}`)}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </nav>
+      )}
 
       {/* Mobile Menu Sidebar */}
       {mobileMenuOpen && (
@@ -165,7 +169,7 @@ export const Header: React.FC<HeaderProps> = ({ activeCategory, onCategoryChange
                           : 'text-gray-700 hover:bg-gray-50'
                       }`}
                     >
-                      {t(`nav.${category.toLowerCase()}`)}
+                      {t(`nav.${category.toLowerCase().replace(/\s+/g, '')}`)}
                     </button>
                   </li>
                 ))}

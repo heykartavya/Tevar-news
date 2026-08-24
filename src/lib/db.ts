@@ -1,4 +1,4 @@
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy, setDoc } from 'firebase/firestore';
+import { collection, getDocs, getDoc, addDoc, updateDoc, deleteDoc, doc, query, orderBy, setDoc, where, limit } from 'firebase/firestore';
 import { db } from './firebase';
 import { Article } from '../types';
 
@@ -9,6 +9,29 @@ export const getArticles = async (): Promise<Article[]> => {
     id: doc.id,
     ...doc.data()
   })) as Article[];
+};
+
+export const getArticleById = async (id: string): Promise<Article | null> => {
+  const docRef = doc(db, 'articles', id);
+  const docSnap = await getDoc(docRef);
+  if (docSnap.exists()) {
+    return { id: docSnap.id, ...docSnap.data() } as Article;
+  }
+  return null;
+};
+
+export const getRelatedArticles = async (category: string, excludeId: string, limitCount: number = 3): Promise<Article[]> => {
+  const q = query(
+    collection(db, 'articles'),
+    where('category', '==', category),
+    limit(limitCount + 1)
+  );
+  const querySnapshot = await getDocs(q);
+  const articles = querySnapshot.docs
+    .map(doc => ({ id: doc.id, ...doc.data() } as Article))
+    .filter(a => a.id !== excludeId)
+    .slice(0, limitCount);
+  return articles;
 };
 
 export const addArticle = async (article: Omit<Article, 'id'>): Promise<string> => {

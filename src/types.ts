@@ -1,8 +1,17 @@
+export interface PostBlock {
+  id: string;
+  type: 'text' | 'image' | 'youtube';
+  content?: string; // HTML for text, URL for image/youtube
+  contentEn?: string;
+  contentHi?: string;
+}
+
 export interface Article {
   id: string;
   title: string;
   excerpt: string;
   content?: string;
+  blocks?: PostBlock[];
   category: string;
   author: string;
   date: string;
@@ -19,4 +28,4 @@ export interface Article {
 }
 
 export type SiteLanguage = 'en' | 'hinglish' | 'hi';
-export type Category = 'All' | 'World' | 'Politics' | 'Business' | 'Technology' | 'Culture' | 'Science';
+export type Category = 'All' | 'National' | 'Uttar Pradesh' | 'Bundelkhand' | 'Politics' | 'Education' | 'Crime' | 'Employment' | 'Video' | 'Special News';
