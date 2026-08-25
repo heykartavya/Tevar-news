@@ -254,6 +254,7 @@ async function startServer() {
         const url = `https://${req.get('host')}/article/${id}`;
 
         
+        
         const metaTags = `
           <meta property="og:title" content="${title.replace(/"/g, '&quot;')}" />
           <meta property="og:description" content="${description}" />
@@ -266,7 +267,13 @@ async function startServer() {
           <meta name="twitter:image" content="${imageUrl}" />
         `;
         
-        html = html.replace('</head>', `${metaTags}</head>`);
+        // Replace everything between <!-- OG_TAGS_START --> and <!-- OG_TAGS_END -->
+        if (html.includes('<!-- OG_TAGS_START -->') && html.includes('<!-- OG_TAGS_END -->')) {
+            html = html.replace(/<!-- OG_TAGS_START -->[\s\S]*?<!-- OG_TAGS_END -->/, metaTags);
+        } else {
+            html = html.replace('</head>', `${metaTags}</head>`);
+        }
+
       }
       
       if (!isProd && vite) {
