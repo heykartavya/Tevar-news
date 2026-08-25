@@ -35,10 +35,11 @@ const ai = new GoogleGenAI({
 
 
 // Image Upload Route using Cloudinary
-app.post("/api/upload", upload.single('image'), async (req, res) => {
+app.post("/api/upload", async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ error: "No image file provided." });
+    const { image } = req.body;
+    if (!image) {
+      return res.status(400).json({ error: "No image provided." });
     }
 
     // Check if Cloudinary is configured
@@ -46,12 +47,8 @@ app.post("/api/upload", upload.single('image'), async (req, res) => {
       return res.status(500).json({ error: "Cloudinary is not configured on the server." });
     }
 
-    // Convert buffer to base64
-    const b64 = Buffer.from(req.file.buffer).toString('base64');
-    let dataURI = "data:" + req.file.mimetype + ";base64," + b64;
-
     // Upload to Cloudinary
-    const result = await cloudinary.uploader.upload(dataURI, {
+    const result = await cloudinary.uploader.upload(image, {
       folder: "tevarnews", // Optional: organizes images in a folder
       resource_type: "auto",
     });
