@@ -230,7 +230,14 @@ export const Admin: React.FC = () => {
                 
                 <div className="sm:col-span-2">
                   <label className="block text-sm font-medium text-gray-700">Author</label>
-                  <input type="text" required value={newArticle.author} onChange={e => setNewArticle({...newArticle, author: e.target.value})} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm" />
+                  <select required value={newArticle.author} onChange={e => setNewArticle({...newArticle, author: e.target.value})} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm">
+                    <option value="" disabled>Select Author</option>
+                    {TEAM_MEMBERS.map(member => (
+                      <option key={member.id} value={member.name}>
+                        {member.name} - {member.designation}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div className="sm:col-span-2">

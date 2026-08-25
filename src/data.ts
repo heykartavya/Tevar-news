@@ -116,3 +116,25 @@ export const MOCK_ARTICLES: Article[] = [
     readTime: '5 min read'
   }
 ];
+
+
+import { TeamMember } from './types';
+
+export const TEAM_MEMBERS: TeamMember[] = [
+  {
+    id: 'shailendra-singh-tomar',
+    name: 'Shailendra Singh Tomar',
+    designation: 'Founder & Editor in Chief',
+    phone: '9695432994',
+    email: 'shailendrasingh35307@gmail.com',
+    imageUrl: 'https://res.cloudinary.com/mzqxmg0a/image/upload/v1787680775/WhatsApp_Image_2026-08-24_at_23.04.09.jpg'
+  },
+  {
+    id: 'desk',
+    name: 'Desk',
+    designation: 'Editorial Team',
+    phone: '',
+    email: 'contact@tevarnews.in',
+    imageUrl: ''
+  }
+];

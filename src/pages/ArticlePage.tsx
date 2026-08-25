@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getArticleById, getRelatedArticles } from '../lib/db';
-import { MOCK_ARTICLES } from '../data';
+import { MOCK_ARTICLES, TEAM_MEMBERS } from '../data';
 import { Article } from '../types';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
@@ -163,10 +163,15 @@ export const ArticlePage: React.FC = () => {
                   </span>
                 </div>
                 <div>
-                  <div className="font-sans font-bold text-gray-900 text-sm">
+                  <div className="font-sans font-bold text-gray-900 text-sm flex items-center">
                     {article.author}
+                    {TEAM_MEMBERS.find(m => m.name === article.author) && (
+                       <span className="ml-2 font-normal text-xs text-red-700 bg-red-50 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                         {TEAM_MEMBERS.find(m => m.name === article.author)?.designation}
+                       </span>
+                    )}
                   </div>
-                  <div className="font-sans text-gray-500 text-xs">
+                  <div className="font-sans text-gray-500 text-xs mt-1">
                     {article.date}
                   </div>
                 </div>

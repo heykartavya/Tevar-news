@@ -29,3 +29,13 @@ export interface Article {
 
 export type SiteLanguage = 'en' | 'hinglish' | 'hi';
 export type Category = 'All' | 'National' | 'Uttar Pradesh' | 'Bundelkhand' | 'Politics' | 'Education' | 'Crime' | 'Employment' | 'Video' | 'Special News' | 'Breaking';
+
+
+export interface TeamMember {
+  id: string;
+  name: string;
+  designation: string;
+  phone?: string;
+  email?: string;
+  imageUrl?: string;
+}
