@@ -33,9 +33,48 @@ export const handler = async (event: any) => {
       const fsData = await fsRes.json();
 
       if (fsData && fsData.fields) {
+
         title = fsData.fields.title?.stringValue || fsData.fields.titleHi?.stringValue || title;
         description = fsData.fields.excerpt?.stringValue || fsData.fields.excerptHi?.stringValue || description;
-        imageUrl = fsData.fields.imageUrl?.stringValue || imageUrl;
+        
+        let fetchedImageUrl = fsData.fields.imageUrl?.stringValue || '';
+        
+        // Quick helper to check for youtube
+        const getYouTubeId = (url: string) => {
+          if (!url) return null;
+          const match = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+          return match ? match[1] : null;
+        }
+
+        const defaultFallback = 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&q=80&w=1000';
+        
+        let ytId = getYouTubeId(fetchedImageUrl);
+        if (ytId) {
+          imageUrl = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+        } else if (fetchedImageUrl && !fetchedImageUrl.includes('auto=format&fit=crop&q=80&w=1000') && fetchedImageUrl !== defaultFallback) {
+          imageUrl = fetchedImageUrl;
+        } else {
+          // Look into blocks for youtube
+          const blocksArray = fsData.fields.blocks?.arrayValue?.values || [];
+          let foundYt = false;
+          for (const blockWrapper of blocksArray) {
+             const b = blockWrapper.mapValue?.fields || {};
+             const type = b.type?.stringValue;
+             const contentStr = b.content?.stringValue;
+             if (type === 'youtube' && contentStr) {
+                const id = getYouTubeId(contentStr);
+                if (id) {
+                   imageUrl = `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+                   foundYt = true;
+                   break;
+                }
+             }
+          }
+          if (!foundYt) {
+             imageUrl = defaultFallback;
+          }
+        }
+
       } else {
         // Fallback to mock data
         const mockArticle = MOCK_ARTICLES.find(a => a.id === articleId);
