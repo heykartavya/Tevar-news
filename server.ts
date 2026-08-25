@@ -1,3 +1,5 @@
+import dotenv from "dotenv";
+dotenv.config();
 import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
@@ -15,9 +17,7 @@ cloudinary.config({
 // Configure Multer for memory storage
 const upload = multer({ storage: multer.memoryStorage() });
 
-import dotenv from "dotenv";
 
-dotenv.config();
 
 const app = express();
 const PORT = 3000;
@@ -152,6 +152,14 @@ For the blocks, translate only the 'content' field if the type is 'text'. For 'i
     console.error("Translation error:", error);
     res.status(500).json({ error: "Failed to translate article. " + (error instanceof Error ? error.message : String(error)) });
   }
+});
+
+// Global Error Handler for Express to return JSON instead of HTML
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error("Global Express Error:", err);
+  res.status(err.status || 500).json({
+    error: err.message || "Internal Server Error"
+  });
 });
 
 async function startServer() {

@@ -66,49 +66,29 @@ export const Admin: React.FC = () => {
     e.preventDefault();
     setTranslating(true);
     try {
-      // Auto-translate using the API
-      const res = await fetch('/api/translate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: newArticle.title,
-          excerpt: newArticle.excerpt,
-          content: newArticle.content || '',
-          blocks: newArticle.blocks || []
-        })
-      });
-      
-      if (!res.ok) {
-        const errData = await res.json().catch(()=>({})); throw new Error(errData.error || 'Translation failed');
-      }
-      
-      const translation = await res.json();
-      
-      // Merge translated blocks back into the article structure
-      const translatedBlocks = (newArticle.blocks || []).map((block, index) => {
-        const enBlock = translation.blocksEn?.[index] || {};
-        const hiBlock = translation.blocksHi?.[index] || {};
+      // Publisher types in Hindi, bypass translation
+      const blocks = (newArticle.blocks || []).map((block) => {
         return {
           ...block,
-          contentEn: block.type === 'text' ? (enBlock.contentEn || enBlock.content || block.content) : block.content,
-          contentHi: block.type === 'text' ? (hiBlock.contentHi || hiBlock.content || block.content) : block.content
+          contentEn: block.content,
+          contentHi: block.content
         };
       });
 
-      const firstImageBlock = translatedBlocks.find(b => b.type === 'image' && b.content);
+      const firstImageBlock = blocks.find(b => b.type === 'image' && b.content);
       const imageUrl = firstImageBlock ? firstImageBlock.content : 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&q=80&w=1000'; // Default news fallback image
 
       const rawArticle = {
         ...newArticle,
-        blocks: translatedBlocks,
+        blocks: blocks,
         imageUrl,
-        titleEn: translation.titleEn,
-        titleHi: translation.titleHi,
-        excerptEn: translation.excerptEn,
-        excerptHi: translation.excerptHi,
-        contentEn: translation.contentEn || '',
-        contentHi: translation.contentHi || '',
-        originalLanguage: translation.detectedLanguage || 'Hinglish'
+        titleEn: newArticle.title,
+        titleHi: newArticle.title,
+        excerptEn: newArticle.excerpt,
+        excerptHi: newArticle.excerpt,
+        contentEn: newArticle.content || '',
+        contentHi: newArticle.content || '',
+        originalLanguage: 'hi'
       };
       
       // Strip undefined values to prevent Firestore errors

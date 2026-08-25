@@ -26,6 +26,13 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
       onUploadError?.('Please select an image file');
       return;
     }
+    
+    // Validate file size (max 5MB)
+    const MAX_SIZE = 5 * 1024 * 1024;
+    if (file.size > MAX_SIZE) {
+      onUploadError?.('Image size must be less than 5MB');
+      return;
+    }
 
     // Show local preview immediately
     const objectUrl = URL.createObjectURL(file);
@@ -41,7 +48,13 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
         body: formData,
       });
 
-      const data = await response.json();
+      let data;
+      const textResponse = await response.text();
+      try {
+        data = JSON.parse(textResponse);
+      } catch (e) {
+        throw new Error(`Server returned ${response.status} ${response.statusText}: ${textResponse.substring(0, 50)}...`);
+      }
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to upload image');
