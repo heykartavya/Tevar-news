@@ -226,32 +226,40 @@ async function startServer() {
         const targetLength = Math.min(Math.floor(fullText.length * 0.4), 800);
         let description = fullText.substring(0, targetLength) + (fullText.length > targetLength ? '...' : '');
         description = description.replace(/"/g, '&quot;');
-        
-
-        const defaultFallback = 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&q=80&w=1000';
-        let imageUrl = articleData.imageUrl || defaultFallback;
-        
-        // Quick helper to check for youtube
-        function getYouTubeId(url) {
+        const getYouTubeId = (url) => {
           if (!url) return null;
           const match = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
           return match ? match[1] : null;
-        }
+        };
 
-        let ytId = getYouTubeId(articleData.imageUrl);
-        if (ytId) {
-          imageUrl = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
-        } else if (articleData.blocks) {
-          const ytBlock = articleData.blocks.find(b => b.type === 'youtube' && b.content);
-          if (ytBlock && ytBlock.content) {
-            ytId = getYouTubeId(ytBlock.content);
-            if (ytId) {
-              imageUrl = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
-            }
-          }
-        }
+        const resolveImage = (mainImg, blocks) => {
+           const ytId = getYouTubeId(mainImg);
+           if (ytId) return `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+           
+           let firstCloudinary = mainImg && mainImg.includes('res.cloudinary.com') ? mainImg : null;
+           
+           if (blocks && Array.isArray(blocks)) {
+             for (const b of blocks) {
+                const type = b.type;
+                const contentStr = b.content;
+                if (type === 'youtube' && contentStr) {
+                   const id = getYouTubeId(contentStr);
+                   if (id) return `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+                }
+                if (type === 'image' && contentStr && !firstCloudinary && contentStr.includes('res.cloudinary.com')) {
+                   firstCloudinary = contentStr;
+                }
+             }
+           }
+           
+           if (firstCloudinary) return firstCloudinary;
+           return mainImg || 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&q=80&w=1000';
+        };
+
+        const imageUrl = resolveImage(articleData.imageUrl || '', articleData.blocks || []);
         
         const url = `https://${req.get('host')}/article/${id}`;
+
 
         
         
