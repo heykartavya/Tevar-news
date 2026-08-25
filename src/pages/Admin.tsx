@@ -3,7 +3,7 @@ import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, on
 import { auth } from '../lib/firebase';
 import { getArticles, addArticle, deleteArticle, seedDatabase } from '../lib/db';
 import { Article } from '../types';
-import { CATEGORIES, MOCK_ARTICLES } from '../data';
+import { CATEGORIES, MOCK_ARTICLES, TEAM_MEMBERS } from '../data';
 import { Trash2, Plus, LogOut, Database, MoveUp, MoveDown } from 'lucide-react';
 import { BlockEditor } from '../components/BlockEditor';
 
