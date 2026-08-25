@@ -5,6 +5,11 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
+    define: {
+      'import.meta.env.VITE_CLOUDINARY_CLOUD_NAME': JSON.stringify(process.env.CLOUDINARY_CLOUD_NAME || ''),
+      'import.meta.env.VITE_CLOUDINARY_API_KEY': JSON.stringify(process.env.CLOUDINARY_API_KEY || ''),
+      'import.meta.env.VITE_CLOUDINARY_API_SECRET': JSON.stringify(process.env.CLOUDINARY_API_SECRET || ''),
+    },
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
