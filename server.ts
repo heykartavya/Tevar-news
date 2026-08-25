@@ -95,7 +95,7 @@ For the blocks, translate only the 'content' field if the type is 'text'. For 'i
 `;
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.6-flash",
+      model: "gemini-3.7-flash",
       contents: prompt,
       config: {
         responseMimeType: "application/json",
