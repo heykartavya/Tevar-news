@@ -1,19 +1,5 @@
 const fs = require('fs');
-const content = fs.readFileSync('server.ts', 'utf-8');
-
-const injectionCode = `
-import { MOCK_ARTICLES } from './src/data';
-import { initializeApp } from 'firebase/app';
-import { getFirestore, doc, getDoc } from 'firebase/firestore';
-
-const firebaseConfig = {
-  apiKey: process.env.VITE_FIREBASE_API_KEY || "AIzaSyBheQS3a1f3PKoVSEH2TqO40Jzv1n_P_hI",
-  projectId: process.env.VITE_FIREBASE_PROJECT_ID || "gen-lang-client-0445592793",
-};
-const firebaseApp = initializeApp(firebaseConfig, "serverApp");
-const dbId = process.env.VITE_FIREBASE_DATABASE_ID || "ai-studio-tevarnews-8a28c4b5-2980-4382-84ec-61e7f72ad2dd";
-const serverDb = getFirestore(firebaseApp, dbId);
-`;
+let content = fs.readFileSync('server.ts', 'utf-8');
 
 const routeCode = `
   app.get("/article/:id", async (req, res, next) => {
@@ -78,49 +64,20 @@ const routeCode = `
         html = html.replace('</head>', \`\${metaTags}</head>\`);
       }
       
-      if (!isProd) {
-         // Need to run through Vite's HTML transform
-         // We'll let Vite middleware handle it instead of hacking the transform here,
-         // but wait, if we call next(), Vite will just read the file itself and ignore our html variable.
-         // So in dev, we MUST transform it. Since vite is available inside startServer:
-         if (vite) {
-            html = await vite.transformIndexHtml(req.url, html);
-         }
+      if (!isProd && vite) {
+         html = await vite.transformIndexHtml(req.url, html);
       }
       
       res.status(200).set({ 'Content-Type': 'text/html' }).end(html);
       return;
     } catch(e) {
-      console.error(e);
+      console.error("Error in SSR route:", e);
       next();
     }
   });
 `;
 
-let newContent = content.replace("import multer from 'multer';", "import multer from 'multer';\n" + injectionCode);
-
-const startServerTarget = `async function startServer() {
-  if (process.env.NODE_ENV !== "production") {
-    const vite = await createViteServer({`;
-
-const newStartServer = `async function startServer() {
-  let vite;
-  if (process.env.NODE_ENV !== "production") {
-    vite = await createViteServer({`;
-
-newContent = newContent.replace(startServerTarget, newStartServer);
-
-const appUseVite = `    app.use(vite.middlewares);
-  } else {`;
-
-const appUseViteReplacement = `    app.use(vite.middlewares);
-  } else {`;
-
-// Let's just insert routeCode before `if (process.env.NODE_ENV !== "production") {`
-// Actually, I need to insert it AFTER `let vite;` or after `vite = await createViteServer({...})`.
-// Let's rewrite startServer entirely via regex.
-
-const startServerFull = `async function startServer() {
+const oldStartServer = `async function startServer() {
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },
@@ -139,7 +96,7 @@ const startServerFull = `async function startServer() {
   });
 }`;
 
-const newStartServerFull = `async function startServer() {
+const newStartServer = `async function startServer() {
   let vite;
   if (process.env.NODE_ENV !== "production") {
     vite = await createViteServer({
@@ -147,24 +104,32 @@ const newStartServerFull = `async function startServer() {
       appType: "spa",
     });
   }
-  
-  ${routeCode}
+
+${routeCode}
 
   if (process.env.NODE_ENV !== "production") {
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath, { index: false })); // don't serve index.html for root yet
+    app.use(express.static(distPath, { index: false }));
+    app.use(express.static(distPath));
     app.get('*all', (req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }
-
   app.listen(PORT, "0.0.0.0", () => {
     console.log(\`Server running on http://0.0.0.0:\${PORT}\`);
   });
 }`;
 
-newContent = newContent.replace(startServerFull, newStartServerFull);
+if (content.includes('async function startServer() {') && content.includes('if (process.env.NODE_ENV !== "production") {') && !content.includes('app.get("/article/:id"')) {
+   content = content.replace(oldStartServer, newStartServer);
+   fs.writeFileSync('server.ts', content);
+   console.log("Patched successfully");
+} else {
+   console.log("Could not find exact block, doing regex");
+   content = content.replace(/async function startServer\(\) \{[\s\S]*\}\nstartServer\(\);/, newStartServer + '\nstartServer();');
+   fs.writeFileSync('server.ts', content);
+   console.log("Patched with regex");
+}
 
-fs.writeFileSync('server.ts', newContent);

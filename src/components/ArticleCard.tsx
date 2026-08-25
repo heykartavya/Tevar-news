@@ -73,10 +73,10 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article, featured = fa
             <span className="text-gray-300 text-xs">•</span>
             <span className="font-sans text-xs text-gray-500">{article.readTime}</span>
           </div>
-          <h2 className="font-serif text-3xl md:text-4xl font-bold leading-tight mb-3 text-gray-900 group-hover:text-red-700 transition-colors">
+          <h2 className="font-serif text-3xl md:text-4xl font-bold leading-tight mb-3 text-gray-900 group-hover:text-red-700 transition-colors word-break-all break-words max-w-full">
             {l(article, 'title')}
           </h2>
-          <p className="font-serif text-lg text-gray-600 leading-relaxed mb-4">
+          <p className="font-serif text-lg text-gray-600 leading-relaxed mb-4 word-break-all break-words max-w-full">
             {l(article, 'excerpt')}
           </p>
           <div className="font-sans text-sm text-gray-500">
@@ -93,7 +93,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article, featured = fa
       <article className="group cursor-pointer flex gap-4 mb-6 border-b border-gray-100 pb-6 last:border-0 last:pb-0 items-start" onClick={handleCardClick}>
         <div className="flex-1">
           <span className="block font-sans font-bold text-[10px] uppercase tracking-widest text-red-700 mb-1">{t(`nav.${article.category.toLowerCase()}`)}</span>
-          <h3 className="font-serif text-lg font-bold leading-snug mb-2 text-gray-900 group-hover:text-red-700 transition-colors">
+          <h3 className="font-serif text-lg font-bold leading-snug mb-2 text-gray-900 group-hover:text-red-700 transition-colors word-break-all break-words max-w-full">
             {l(article, 'title')}
           </h3>
           <div className="font-sans text-xs text-gray-500">
@@ -129,10 +129,10 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article, featured = fa
       </div>
       <div className="flex-1 flex flex-col">
         <span className="block font-sans font-bold text-xs uppercase tracking-widest text-red-700 mb-2">{t(`nav.${article.category.toLowerCase()}`)}</span>
-        <h3 className="font-serif text-xl font-bold leading-snug mb-2 text-gray-900 group-hover:text-red-700 transition-colors line-clamp-3">
+        <h3 className="font-serif text-xl font-bold leading-snug mb-2 text-gray-900 group-hover:text-red-700 transition-colors line-clamp-3 word-break-all break-words max-w-full">
           {l(article, 'title')}
         </h3>
-        <p className="font-serif text-gray-600 text-sm leading-relaxed mb-4 line-clamp-2 flex-1">
+        <p className="font-serif text-gray-600 text-sm leading-relaxed mb-4 line-clamp-2 flex-1 word-break-all break-words max-w-full">
           {l(article, 'excerpt')}
         </p>
         <div className="font-sans text-xs text-gray-500 mt-auto">

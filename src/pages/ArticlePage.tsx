@@ -147,7 +147,7 @@ export const ArticlePage: React.FC = () => {
               </span>
             </div>
             
-            <h1 className="text-4xl md:text-5xl font-serif font-black text-gray-900 leading-tight mb-6">
+            <h1 className="text-4xl md:text-5xl font-serif font-black text-gray-900 leading-tight mb-6 word-break-all break-words">
               {l(article, 'title')}
             </h1>
             
@@ -198,7 +198,7 @@ export const ArticlePage: React.FC = () => {
             </div>
           </header>
 
-          <div className="article-body">
+          <div className="article-body word-break-all break-words">
             {article.blocks && article.blocks.length > 0 ? (
               <div className="space-y-6 md:space-y-8 font-serif text-lg md:text-xl leading-relaxed text-gray-800">
                 {article.blocks.map((block, idx) => {
@@ -206,7 +206,7 @@ export const ArticlePage: React.FC = () => {
                     return (
                       <div 
                         key={idx} 
-                        className="text-gray-800 [&>p]:mb-4 [&>h2]:text-2xl [&>h2]:font-bold [&>h2]:mt-8 [&>h2]:mb-4"
+                        className="text-gray-800 [&>p]:mb-4 [&>h2]:text-2xl [&>h2]:font-bold [&>h2]:mt-8 [&>h2]:mb-4 word-break-all break-words max-w-full overflow-x-hidden"
                         dangerouslySetInnerHTML={{ __html: l(block, 'content') }}
                       />
                     );
@@ -246,7 +246,7 @@ export const ArticlePage: React.FC = () => {
               </div>
             ) : (
               <div 
-                className="font-serif text-lg md:text-xl leading-relaxed text-gray-800 [&>p]:mb-6 [&>h2]:text-2xl [&>h2]:font-bold [&>h2]:mt-10 [&>h2]:mb-4"
+                className="font-serif text-lg md:text-xl leading-relaxed text-gray-800 [&>p]:mb-6 [&>h2]:text-2xl [&>h2]:font-bold [&>h2]:mt-10 [&>h2]:mb-4 word-break-all break-words max-w-full overflow-x-hidden"
                 dangerouslySetInnerHTML={{ __html: l(article, 'content') }}
               />
             )}

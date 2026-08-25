@@ -8,6 +8,19 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { v2 as cloudinary } from 'cloudinary';
 import multer from 'multer';
 
+import { MOCK_ARTICLES } from './src/data';
+import { initializeApp } from 'firebase/app';
+import { getFirestore, doc, getDoc } from 'firebase/firestore';
+
+const firebaseConfig = {
+  apiKey: process.env.VITE_FIREBASE_API_KEY || "AIzaSyBheQS3a1f3PKoVSEH2TqO40Jzv1n_P_hI",
+  projectId: process.env.VITE_FIREBASE_PROJECT_ID || "gen-lang-client-0445592793",
+};
+const firebaseApp = initializeApp(firebaseConfig, "serverApp");
+const dbId = process.env.VITE_FIREBASE_DATABASE_ID || "ai-studio-tevarnews-8a28c4b5-2980-4382-84ec-61e7f72ad2dd";
+const serverDb = getFirestore(firebaseApp, dbId);
+
+
 // Configure Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -160,21 +173,100 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   });
 });
 
+
 async function startServer() {
+  let vite;
   if (process.env.NODE_ENV !== "production") {
-    const vite = await createViteServer({
+    vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
     });
+  }
+
+  app.get("/article/:id", async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      
+      let articleData = null;
+      try {
+        const docRef = doc(serverDb, 'articles', id);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          articleData = { id: docSnap.id, ...docSnap.data() };
+        }
+      } catch (e) {
+        console.error("Firestore error on server:", e);
+      }
+      
+      if (!articleData) {
+         articleData = MOCK_ARTICLES.find(a => a.id === id) || null;
+      }
+      
+      let html = "";
+      const isProd = process.env.NODE_ENV === "production";
+      
+      if (isProd) {
+        html = fs.readFileSync(path.join(process.cwd(), 'dist', 'index.html'), 'utf-8');
+      } else {
+        html = fs.readFileSync(path.join(process.cwd(), 'index.html'), 'utf-8');
+      }
+      
+      if (articleData) {
+        const title = articleData.title || 'Tevar News';
+        let fullText = articleData.excerpt || "";
+        if (articleData.content) fullText += " " + articleData.content;
+        if (articleData.blocks) {
+           articleData.blocks.forEach((b) => {
+              if (b.type === 'text' && b.content) {
+                 fullText += " " + b.content.replace(/<[^>]*>?/gm, '');
+              }
+           });
+        }
+        
+        const targetLength = Math.min(Math.floor(fullText.length * 0.4), 800);
+        let description = fullText.substring(0, targetLength) + (fullText.length > targetLength ? '...' : '');
+        description = description.replace(/"/g, '&quot;');
+        
+        const imageUrl = articleData.imageUrl || '';
+        const url = `https://${req.get('host')}/article/${id}`;
+        
+        const metaTags = `
+          <meta property="og:title" content="${title.replace(/"/g, '&quot;')}" />
+          <meta property="og:description" content="${description}" />
+          <meta property="og:image" content="${imageUrl}" />
+          <meta property="og:url" content="${url}" />
+          <meta property="og:type" content="article" />
+          <meta name="twitter:card" content="summary_large_image" />
+          <meta name="twitter:title" content="${title.replace(/"/g, '&quot;')}" />
+          <meta name="twitter:description" content="${description}" />
+          <meta name="twitter:image" content="${imageUrl}" />
+        `;
+        
+        html = html.replace('</head>', `${metaTags}</head>`);
+      }
+      
+      if (!isProd && vite) {
+         html = await vite.transformIndexHtml(req.url, html);
+      }
+      
+      res.status(200).set({ 'Content-Type': 'text/html' }).end(html);
+      return;
+    } catch(e) {
+      console.error("Error in SSR route:", e);
+      next();
+    }
+  });
+
+  if (process.env.NODE_ENV !== "production") {
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), 'dist');
+    app.use(express.static(distPath, { index: false }));
     app.use(express.static(distPath));
     app.get('*all', (req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }
-
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://0.0.0.0:${PORT}`);
   });
