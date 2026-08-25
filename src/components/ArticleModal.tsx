@@ -3,6 +3,7 @@ import { Article } from '../types';
 import { X } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { useLanguage } from '../lib/LanguageContext';
+import { getArticleImage } from '../lib/utils';
 
 interface ArticleModalProps {
   article: Article;
@@ -36,7 +37,7 @@ export const ArticleModal: React.FC<ArticleModalProps> = ({ article, onClose }) 
 
         <div className="w-full h-[300px] sm:h-[400px] shrink-0 relative">
           <img 
-            src={article.imageUrl} 
+            src={getArticleImage(article)} 
             alt={l(article, 'title')}
             className="w-full h-full object-cover"
           />

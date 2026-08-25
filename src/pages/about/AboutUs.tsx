@@ -49,8 +49,8 @@ export const AboutUs: React.FC = () => {
                 </div>
               )}
               <div className="p-5 flex-1 flex flex-col">
-                <h4 className="text-xl font-bold font-serif text-gray-900 mb-1">{member.name}</h4>
-                <p className="text-red-700 font-sans font-bold text-sm tracking-wider uppercase mb-4">{member.designation}</p>
+                <h4 className="text-xl font-bold font-serif text-gray-900 mb-1">{member.nameHi || member.name}</h4>
+                <p className="text-red-700 font-sans font-bold text-sm tracking-wider uppercase mb-4">{member.designationHi || member.designation}</p>
                 <div className="font-sans text-sm text-gray-600 space-y-2 mt-auto">
                   {member.phone && (
                     <p className="flex items-center">

@@ -32,6 +32,8 @@ export type Category = 'All' | 'National' | 'Uttar Pradesh' | 'Bundelkhand' | 'P
 
 
 export interface TeamMember {
+  nameHi?: string;
+  designationHi?: string;
   id: string;
   name: string;
   designation: string;

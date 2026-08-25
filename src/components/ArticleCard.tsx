@@ -3,6 +3,7 @@ import { Article } from '../types';
 import { X, ZoomIn } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { useLanguage } from '../lib/LanguageContext';
+import { getArticleImage } from '../lib/utils';
 
 interface ArticleCardProps {
   article: Article;
@@ -44,7 +45,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article, featured = fa
           <X size={32} />
         </button>
         <img 
-          src={article.imageUrl} 
+          src={getArticleImage(article)} 
           alt={l(article, 'title')} 
           className="max-w-full max-h-full object-contain cursor-default shadow-2xl"
           onClick={(e) => e.stopPropagation()}
@@ -59,7 +60,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article, featured = fa
       <article className="group cursor-pointer flex flex-col mb-8 border-b border-gray-200 pb-8 last:border-0 last:pb-0" onClick={handleCardClick}>
         <div className="relative overflow-hidden mb-4 rounded-sm" onClick={handleImageClick}>
           <img 
-            src={article.imageUrl} 
+            src={getArticleImage(article)} 
             alt={l(article, 'title')} 
             className="w-full h-[250px] sm:h-[400px] object-cover transition-transform duration-700 group-hover:scale-105"
           />
@@ -102,7 +103,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article, featured = fa
         </div>
         <div className="relative w-24 h-24 shrink-0 overflow-hidden rounded-sm" onClick={handleImageClick}>
           <img 
-            src={article.imageUrl} 
+            src={getArticleImage(article)} 
             alt={l(article, 'title')} 
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
           />
@@ -119,7 +120,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article, featured = fa
     <article className="group cursor-pointer flex flex-col h-full" onClick={handleCardClick}>
       <div className="relative overflow-hidden mb-3 rounded-sm aspect-[4/3]" onClick={handleImageClick}>
         <img 
-          src={article.imageUrl} 
+          src={getArticleImage(article)} 
           alt={l(article, 'title')} 
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
         />

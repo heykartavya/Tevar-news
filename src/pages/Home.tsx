@@ -7,6 +7,7 @@ import { ArticleCard } from '../components/ArticleCard';
 import { HeroSkeleton, GridSkeleton, CompactSkeleton, TrendingSkeleton } from '../components/ArticleSkeleton';
 import { Category, Article } from '../types';
 import { MOCK_ARTICLES } from '../data';
+import { getArticleImage } from '../lib/utils';
 import { TrendingUp } from 'lucide-react';
 import { getArticles } from '../lib/db';
 import { useLanguage } from '../lib/LanguageContext';
@@ -303,7 +304,7 @@ export const Home: React.FC = () => {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
                 {articles.filter(a => a.category === 'Video' || true).slice(0, 4).map((article, i) => (
                   <div key={`video-${article.id}-${i}`} className="relative group cursor-pointer aspect-[9/16] bg-zinc-800 rounded-md overflow-hidden" onClick={() => navigate(`/article/${article.id}`)}>
-                    <img src={article.imageUrl} alt="thumbnail" className="absolute inset-0 w-full h-full object-cover opacity-70 group-hover:opacity-100 transition-opacity duration-300" />
+                    <img src={getArticleImage(article)} alt="thumbnail" className="absolute inset-0 w-full h-full object-cover opacity-70 group-hover:opacity-100 transition-opacity duration-300" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div className="w-12 h-12 bg-red-600/90 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getArticleImage } from '../lib/utils';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getArticleById, getRelatedArticles } from '../lib/db';
 import { MOCK_ARTICLES, TEAM_MEMBERS } from '../data';
@@ -77,7 +78,7 @@ export const ArticlePage: React.FC = () => {
 
       setMeta('og:title', title);
       setMeta('og:description', excerpt);
-      setMeta('og:image', article.imageUrl);
+      setMeta('og:image', getArticleImage(article));
       setMeta('og:url', window.location.href);
       setMeta('og:type', 'article');
     }
@@ -156,26 +157,38 @@ export const ArticlePage: React.FC = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row sm:items-center justify-between border-t border-b border-gray-100 py-4 gap-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-full bg-gray-200 flex flex-shrink-0 items-center justify-center overflow-hidden">
-                  <span className="font-serif font-bold text-gray-500">
-                    {article.author.charAt(0)}
-                  </span>
-                </div>
-                <div>
-                  <div className="font-sans font-bold text-gray-900 text-sm flex items-center">
-                    {article.author}
-                    {TEAM_MEMBERS.find(m => m.name === article.author) && (
-                       <span className="ml-2 font-normal text-xs text-red-700 bg-red-50 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                         {TEAM_MEMBERS.find(m => m.name === article.author)?.designation}
-                       </span>
-                    )}
+              {(() => {
+                const authorMember = TEAM_MEMBERS.find(m => m.name === article.author);
+                const displayAuthorName = authorMember?.nameHi || authorMember?.name || article.author;
+                const displayDesignation = authorMember?.designationHi || authorMember?.designation;
+                
+                return (
+                  <div className="flex items-center space-x-3">
+                    <div className="w-12 h-12 rounded-full bg-gray-200 flex flex-shrink-0 items-center justify-center overflow-hidden">
+                      {authorMember?.imageUrl ? (
+                        <img src={authorMember.imageUrl} alt={displayAuthorName} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="font-serif font-bold text-gray-500 text-lg">
+                          {displayAuthorName.charAt(0)}
+                        </span>
+                      )}
+                    </div>
+                    <div>
+                      <div className="font-sans font-bold text-gray-900 text-base">
+                        {displayAuthorName}
+                      </div>
+                      {displayDesignation && (
+                        <div className="font-sans text-gray-600 text-sm italic mt-0.5">
+                          {displayDesignation}
+                        </div>
+                      )}
+                      <div className="font-sans text-gray-500 text-xs mt-1">
+                        {article.date}
+                      </div>
+                    </div>
                   </div>
-                  <div className="font-sans text-gray-500 text-xs mt-1">
-                    {article.date}
-                  </div>
-                </div>
-              </div>
+                );
+              })()}
               
               {/* Share Buttons */}
               <div className="flex items-center gap-2">
@@ -229,7 +242,7 @@ export const ArticlePage: React.FC = () => {
                     );
                   }
                   if (block.type === 'youtube') {
-                    const videoIdMatch = block.content.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+                    const videoIdMatch = block.content.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
                     const videoId = videoIdMatch ? videoIdMatch[1] : null;
                     if (videoId) {
                       return (

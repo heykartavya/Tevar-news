@@ -1,170 +1,37 @@
 const fs = require('fs');
-const content = fs.readFileSync('server.ts', 'utf-8');
+let content = fs.readFileSync('server.ts', 'utf8');
 
-const injectionCode = `
-import { MOCK_ARTICLES } from './src/data';
-import { initializeApp } from 'firebase/app';
-import { getFirestore, doc, getDoc } from 'firebase/firestore';
-
-const firebaseConfig = {
-  apiKey: process.env.VITE_FIREBASE_API_KEY || "AIzaSyBheQS3a1f3PKoVSEH2TqO40Jzv1n_P_hI",
-  projectId: process.env.VITE_FIREBASE_PROJECT_ID || "gen-lang-client-0445592793",
-};
-const firebaseApp = initializeApp(firebaseConfig, "serverApp");
-const dbId = process.env.VITE_FIREBASE_DATABASE_ID || "ai-studio-tevarnews-8a28c4b5-2980-4382-84ec-61e7f72ad2dd";
-const serverDb = getFirestore(firebaseApp, dbId);
-`;
-
-const routeCode = `
-  app.get("/article/:id", async (req, res, next) => {
-    try {
-      const { id } = req.params;
-      
-      let articleData = null;
-      try {
-        const docRef = doc(serverDb, 'articles', id);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          articleData = { id: docSnap.id, ...docSnap.data() };
+const replacement = `
+        const defaultFallback = 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&q=80&w=1000';
+        let imageUrl = articleData.imageUrl || defaultFallback;
+        
+        // Quick helper to check for youtube
+        function getYouTubeId(url) {
+          if (!url) return null;
+          const match = url.match(/(?:youtube\\.com\\/(?:[^\\/]+\\/.+\\/|(?:v|e(?:mbed)?|shorts)\\/|.*[?&]v=)|youtu\\.be\\/)([^"&?\\/\\s]{11})/);
+          return match ? match[1] : null;
         }
-      } catch (e) {
-        console.error("Firestore error on server:", e);
-      }
-      
-      if (!articleData) {
-         articleData = MOCK_ARTICLES.find(a => a.id === id) || null;
-      }
-      
-      let html = "";
-      const isProd = process.env.NODE_ENV === "production";
-      
-      if (isProd) {
-        html = fs.readFileSync(path.join(process.cwd(), 'dist', 'index.html'), 'utf-8');
-      } else {
-        html = fs.readFileSync(path.join(process.cwd(), 'index.html'), 'utf-8');
-      }
-      
-      if (articleData) {
-        const title = articleData.title || 'Tevar News';
-        let fullText = articleData.excerpt || "";
-        if (articleData.content) fullText += " " + articleData.content;
-        if (articleData.blocks) {
-           articleData.blocks.forEach((b) => {
-              if (b.type === 'text' && b.content) {
-                 fullText += " " + b.content.replace(/<[^>]*>?/gm, '');
-              }
-           });
+
+        let ytId = getYouTubeId(articleData.imageUrl);
+        if (ytId) {
+          imageUrl = \`https://img.youtube.com/vi/\${ytId}/hqdefault.jpg\`;
+        } else if (articleData.blocks) {
+          const ytBlock = articleData.blocks.find(b => b.type === 'youtube' && b.content);
+          if (ytBlock && ytBlock.content) {
+            ytId = getYouTubeId(ytBlock.content);
+            if (ytId) {
+              imageUrl = \`https://img.youtube.com/vi/\${ytId}/hqdefault.jpg\`;
+            }
+          }
         }
         
-        const targetLength = Math.min(Math.floor(fullText.length * 0.4), 800);
-        let description = fullText.substring(0, targetLength) + (fullText.length > targetLength ? '...' : '');
-        description = description.replace(/"/g, '&quot;');
-        
-        const imageUrl = articleData.imageUrl || '';
         const url = \`https://\${req.get('host')}/article/\${id}\`;
-        
-        const metaTags = \`
-          <meta property="og:title" content="\${title.replace(/"/g, '&quot;')}" />
-          <meta property="og:description" content="\${description}" />
-          <meta property="og:image" content="\${imageUrl}" />
-          <meta property="og:url" content="\${url}" />
-          <meta property="og:type" content="article" />
-          <meta name="twitter:card" content="summary_large_image" />
-          <meta name="twitter:title" content="\${title.replace(/"/g, '&quot;')}" />
-          <meta name="twitter:description" content="\${description}" />
-          <meta name="twitter:image" content="\${imageUrl}" />
-        \`;
-        
-        html = html.replace('</head>', \`\${metaTags}</head>\`);
-      }
-      
-      if (!isProd) {
-         // Need to run through Vite's HTML transform
-         // We'll let Vite middleware handle it instead of hacking the transform here,
-         // but wait, if we call next(), Vite will just read the file itself and ignore our html variable.
-         // So in dev, we MUST transform it. Since vite is available inside startServer:
-         if (vite) {
-            html = await vite.transformIndexHtml(req.url, html);
-         }
-      }
-      
-      res.status(200).set({ 'Content-Type': 'text/html' }).end(html);
-      return;
-    } catch(e) {
-      console.error(e);
-      next();
-    }
-  });
 `;
 
-let newContent = content.replace("import multer from 'multer';", "import multer from 'multer';\n" + injectionCode);
+content = content.replace(
+  "        const imageUrl = articleData.imageUrl || '';\n        const url = `https://${req.get('host')}/article/${id}`;",
+  replacement
+);
 
-const startServerTarget = `async function startServer() {
-  if (process.env.NODE_ENV !== "production") {
-    const vite = await createViteServer({`;
-
-const newStartServer = `async function startServer() {
-  let vite;
-  if (process.env.NODE_ENV !== "production") {
-    vite = await createViteServer({`;
-
-newContent = newContent.replace(startServerTarget, newStartServer);
-
-const appUseVite = `    app.use(vite.middlewares);
-  } else {`;
-
-const appUseViteReplacement = `    app.use(vite.middlewares);
-  } else {`;
-
-// Let's just insert routeCode before `if (process.env.NODE_ENV !== "production") {`
-// Actually, I need to insert it AFTER `let vite;` or after `vite = await createViteServer({...})`.
-// Let's rewrite startServer entirely via regex.
-
-const startServerFull = `async function startServer() {
-  if (process.env.NODE_ENV !== "production") {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "spa",
-    });
-    app.use(vite.middlewares);
-  } else {
-    const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
-    app.get('*all', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
-  }
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(\`Server running on http://0.0.0.0:\${PORT}\`);
-  });
-}`;
-
-const newStartServerFull = `async function startServer() {
-  let vite;
-  if (process.env.NODE_ENV !== "production") {
-    vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "spa",
-    });
-  }
-  
-  ${routeCode}
-
-  if (process.env.NODE_ENV !== "production") {
-    app.use(vite.middlewares);
-  } else {
-    const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath, { index: false })); // don't serve index.html for root yet
-    app.get('*all', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
-  }
-
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(\`Server running on http://0.0.0.0:\${PORT}\`);
-  });
-}`;
-
-newContent = newContent.replace(startServerFull, newStartServerFull);
-
-fs.writeFileSync('server.ts', newContent);
+fs.writeFileSync('server.ts', content);
+console.log("Patched server.ts");
