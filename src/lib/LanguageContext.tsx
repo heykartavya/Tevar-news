@@ -70,17 +70,16 @@ const translations = {
     'team.p1.role': 'Editor-in-Chief',
     'team.p2.name': 'Aisha Patel',
     'team.p2.role': 'Managing Editor',
-    'team.p3.name': 'Michael Chen',
+    'team.p3.name': 'Amit Sharma',
     'team.p3.role': 'Lead Investigative Reporter',
-    'team.p4.name': 'Sarah Jenkins',
+    'team.p4.name': 'Neha Gupta',
     'team.p4.role': 'Head of Digital Strategy',
-    'team.p5.name': 'David Osei',
+    'team.p5.name': 'Rahul Verma',
     'team.p5.role': 'Chief Photographer',
-    'team.p6.name': 'Elena Rodriguez',
+    'team.p6.name': 'Priya Singh',
     'team.p6.role': 'Data Journalism Lead',
   },
   hinglish: {
-    // UI remains English in Hinglish mode
     'nav.all': 'All',
     'nav.national': 'National',
     'nav.uttarpradesh': 'Uttar Pradesh',
@@ -91,6 +90,7 @@ const translations = {
     'nav.employment': 'Employment',
     'nav.video': 'Video',
     'nav.specialnews': 'Special News',
+    // UI remains English in Hinglish mode
     'home.topStories': 'Top Stories',
     'home.trendingNow': 'Trending Now',
     'home.theDailyBrief': 'The Daily Brief',
@@ -141,13 +141,13 @@ const translations = {
     'team.p1.role': 'Editor-in-Chief',
     'team.p2.name': 'Aisha Patel',
     'team.p2.role': 'Managing Editor',
-    'team.p3.name': 'Michael Chen',
+    'team.p3.name': 'Amit Sharma',
     'team.p3.role': 'Lead Investigative Reporter',
-    'team.p4.name': 'Sarah Jenkins',
+    'team.p4.name': 'Neha Gupta',
     'team.p4.role': 'Head of Digital Strategy',
-    'team.p5.name': 'David Osei',
+    'team.p5.name': 'Rahul Verma',
     'team.p5.role': 'Chief Photographer',
-    'team.p6.name': 'Elena Rodriguez',
+    'team.p6.name': 'Priya Singh',
     'team.p6.role': 'Data Journalism Lead',
   },
   hi: {
@@ -211,13 +211,13 @@ const translations = {
     'team.p1.role': 'प्रधान संपादक',
     'team.p2.name': 'आयशा पटेल',
     'team.p2.role': 'प्रबंध संपादक',
-    'team.p3.name': 'माइकल चेन',
+    'team.p3.name': 'अमित शर्मा',
     'team.p3.role': 'लीड इन्वेस्टिगेटिव रिपोर्टर',
-    'team.p4.name': 'सारा जेनकिंस',
+    'team.p4.name': 'नेहा गुप्ता',
     'team.p4.role': 'डिजिटल रणनीति प्रमुख',
-    'team.p5.name': 'डेविड ओसी',
+    'team.p5.name': 'राहुल वर्मा',
     'team.p5.role': 'मुख्य फ़ोटोग्राफ़र',
-    'team.p6.name': 'एलेना रोड्रिग्ज',
+    'team.p6.name': 'प्रिया सिंह',
     'team.p6.role': 'डेटा जर्नलिज्म लीड',
   }
 };
@@ -225,7 +225,7 @@ const translations = {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [language, setLanguageState] = useState<SiteLanguage>('en');
+  const [language, setLanguageState] = useState<SiteLanguage>('hi');
 
   useEffect(() => {
     const saved = localStorage.getItem('site_language') as SiteLanguage;

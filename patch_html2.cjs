@@ -1,9 +1,10 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tevar News</title>
+const fs = require('fs');
+let html = fs.readFileSync('index.html', 'utf8');
+
+// First remove existing OG tags we just added
+html = html.replace(/<meta name="description"[\s\S]*?<meta name="twitter:image"[^>]*>/, '');
+
+const ogTags = `
     <!-- OG_TAGS_START -->
     <meta name="description" content="तेवर न्यूज़ - जालौन, उरई, और बुंदेलखंड की सबसे ताज़ा और सच्ची खबरें।">
     <meta property="og:title" content="तेवर न्यूज़ (Tevar News)" />
@@ -16,13 +17,8 @@
     <meta name="twitter:description" content="जालौन, उरई, और बुंदेलखंड की सबसे ताज़ा और सच्ची खबरें सीधे आपके फोन पर।" />
     <meta name="twitter:image" content="https://images.unsplash.com/photo-1585829365295-ab7cd400c167?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80" />
     <!-- OG_TAGS_END -->
+`;
 
-    
+html = html.replace('<title>Tevar News</title>', '<title>Tevar News</title>' + ogTags);
 
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html>
-
+fs.writeFileSync('index.html', html);

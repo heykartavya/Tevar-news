@@ -1,16 +1,15 @@
-import { Category, Article } from './types';
+const fs = require('fs');
+const content = `import { Category, Article } from './types';
 
 export const CATEGORIES: Category[] = [
   'All',
-  'National',
-  'Uttar Pradesh',
+  'Jalaun',
+  'Orai',
+  'Kalpi',
   'Bundelkhand',
-  'Politics',
-  'Education',
-  'Crime',
-  'Employment',
-  'Video',
-  'Special News'
+  'National',
+  'Breaking',
+  'Video'
 ];
 
 export const MOCK_ARTICLES: Article[] = [
@@ -116,3 +115,5 @@ export const MOCK_ARTICLES: Article[] = [
     readTime: '5 min read'
   }
 ];
+`;
+fs.writeFileSync('src/data.ts', content);

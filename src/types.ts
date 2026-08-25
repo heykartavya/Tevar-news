@@ -28,4 +28,4 @@ export interface Article {
 }
 
 export type SiteLanguage = 'en' | 'hinglish' | 'hi';
-export type Category = 'All' | 'National' | 'Uttar Pradesh' | 'Bundelkhand' | 'Politics' | 'Education' | 'Crime' | 'Employment' | 'Video' | 'Special News';
+export type Category = 'All' | 'National' | 'Uttar Pradesh' | 'Bundelkhand' | 'Politics' | 'Education' | 'Crime' | 'Employment' | 'Video' | 'Special News' | 'Breaking';
