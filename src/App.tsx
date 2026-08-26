@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Home } from './pages/Home';
 import { Admin } from './pages/Admin';
 import { ArticlePage } from './pages/ArticlePage';
+import { IDCard } from './pages/IDCard';
 import { AboutLayout } from './pages/about/AboutLayout';
 import { AboutUs } from './pages/about/AboutUs';
 import { ContactUs } from './pages/about/ContactUs';
@@ -23,6 +24,7 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/article/:id" element={<ArticlePage />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/id/:id" element={<IDCard />} />
           <Route path="/about" element={<AboutLayout />}>
             <Route index element={<Navigate to="about-us" replace />} />
             <Route path="about-us" element={<AboutUs />} />

@@ -40,4 +40,8 @@ export interface TeamMember {
   phone?: string;
   email?: string;
   imageUrl?: string;
+  address?: string;
+  aadhaar?: string;
+  signatureUrl?: string;
+  employeeId?: string;
 }

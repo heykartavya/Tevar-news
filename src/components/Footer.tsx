@@ -5,6 +5,10 @@ import { useLanguage } from '../lib/LanguageContext';
 
 export const Footer: React.FC = () => {
   const { t } = useLanguage();
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <footer className="bg-zinc-950 text-white pt-16 pb-8 border-t-4 border-red-700 mt-20">
       <div className="max-w-7xl mx-auto px-4 md:px-6">
@@ -18,32 +22,32 @@ export const Footer: React.FC = () => {
               Delivering uncompromised journalism, breaking news, and in-depth analysis from around the globe since 2026.
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="text-zinc-400 hover:text-white transition-colors"><Twitter size={20} /></a>
-              <a href="#" className="text-zinc-400 hover:text-white transition-colors"><Facebook size={20} /></a>
-              <a href="#" className="text-zinc-400 hover:text-white transition-colors"><Instagram size={20} /></a>
-              <a href="#" className="text-zinc-400 hover:text-white transition-colors"><Linkedin size={20} /></a>
+              <a href="#" onClick={scrollToTop} className="text-zinc-400 hover:text-white transition-colors"><Twitter size={20} /></a>
+              <a href="#" onClick={scrollToTop} className="text-zinc-400 hover:text-white transition-colors"><Facebook size={20} /></a>
+              <a href="#" onClick={scrollToTop} className="text-zinc-400 hover:text-white transition-colors"><Instagram size={20} /></a>
+              <a href="#" onClick={scrollToTop} className="text-zinc-400 hover:text-white transition-colors"><Linkedin size={20} /></a>
             </div>
           </div>
 
           <div>
             <h3 className="font-sans font-bold uppercase tracking-wider text-sm mb-4 text-zinc-200">Sections</h3>
             <ul className="space-y-3 font-sans text-sm text-zinc-400">
-              <li><Link to="/" className="hover:text-red-400 transition-colors">{t('nav.national')}</Link></li>
-              <li><Link to="/" className="hover:text-red-400 transition-colors">{t('nav.uttarpradesh')}</Link></li>
-              <li><Link to="/" className="hover:text-red-400 transition-colors">{t('nav.bundelkhand')}</Link></li>
-              <li><Link to="/" className="hover:text-red-400 transition-colors">{t('nav.education')}</Link></li>
-              <li><Link to="/" className="hover:text-red-400 transition-colors">{t('nav.crime')}</Link></li>
+              <li><Link onClick={scrollToTop} to="/" className="hover:text-red-400 transition-colors">{t('nav.national')}</Link></li>
+              <li><Link onClick={scrollToTop} to="/" className="hover:text-red-400 transition-colors">{t('nav.uttarpradesh')}</Link></li>
+              <li><Link onClick={scrollToTop} to="/" className="hover:text-red-400 transition-colors">{t('nav.bundelkhand')}</Link></li>
+              <li><Link onClick={scrollToTop} to="/" className="hover:text-red-400 transition-colors">{t('nav.education')}</Link></li>
+              <li><Link onClick={scrollToTop} to="/" className="hover:text-red-400 transition-colors">{t('nav.crime')}</Link></li>
             </ul>
           </div>
 
           <div>
             <h3 className="font-sans font-bold uppercase tracking-wider text-sm mb-4 text-zinc-200">{t('about.title')}</h3>
             <ul className="space-y-3 font-sans text-sm text-zinc-400">
-              <li><Link to="/about/about-us" className="hover:text-white transition-colors">{t('about.aboutUs')}</Link></li>
-              <li><Link to="/about/contact-us" className="hover:text-white transition-colors">{t('about.contactUs')}</Link></li>
-              <li><Link to="/about/advertise" className="hover:text-white transition-colors">{t('about.advertise')}</Link></li>
-              <li><Link to="/about/privacy-policy" className="hover:text-white transition-colors">{t('about.privacyPolicy')}</Link></li>
-              <li><Link to="/about/grievance" className="hover:text-white transition-colors">{t('about.grievance')}</Link></li>
+              <li><Link onClick={scrollToTop} to="/about/about-us" className="hover:text-white transition-colors">{t('about.aboutUs')}</Link></li>
+              <li><Link onClick={scrollToTop} to="/about/contact-us" className="hover:text-white transition-colors">{t('about.contactUs')}</Link></li>
+              <li><Link onClick={scrollToTop} to="/about/advertise" className="hover:text-white transition-colors">{t('about.advertise')}</Link></li>
+              <li><Link onClick={scrollToTop} to="/about/privacy-policy" className="hover:text-white transition-colors">{t('about.privacyPolicy')}</Link></li>
+              <li><Link onClick={scrollToTop} to="/about/grievance" className="hover:text-white transition-colors">{t('about.grievance')}</Link></li>
             </ul>
           </div>
 
@@ -72,10 +76,10 @@ export const Footer: React.FC = () => {
         <div className="flex flex-col md:flex-row justify-between items-center text-zinc-500 font-sans text-xs">
           <p className="text-center md:text-left">&copy; {new Date().getFullYear()} Tevar News Media. All rights reserved.</p>
           <div className="flex flex-wrap justify-center gap-4 mt-4 md:mt-0">
-            <a href="#" className="hover:text-zinc-300">Privacy Policy</a>
-            <a href="#" className="hover:text-zinc-300">Terms of Service</a>
-            <a href="#" className="hover:text-zinc-300">Ad Choices</a>
-            <a href="#" className="hover:text-zinc-300">Cookie Settings</a>
+            <a href="#" onClick={scrollToTop} className="hover:text-zinc-300">Privacy Policy</a>
+            <a href="#" onClick={scrollToTop} className="hover:text-zinc-300">Terms of Service</a>
+            <a href="#" onClick={scrollToTop} className="hover:text-zinc-300">Ad Choices</a>
+            <a href="#" onClick={scrollToTop} className="hover:text-zinc-300">Cookie Settings</a>
           </div>
         </div>
       </div>

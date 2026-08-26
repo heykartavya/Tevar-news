@@ -1,10 +1,37 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { useLanguage } from '../../lib/LanguageContext';
 import { TEAM_MEMBERS } from '../../data';
+import { useState, useEffect } from 'react';
+import { db } from '../../lib/firebase';
+import { collection, getDocs } from 'firebase/firestore';
+import { TeamMember } from '../../types';
 
 
 export const AboutUs: React.FC = () => {
   const { t } = useLanguage();
+  const [dbTeam, setDbTeam] = useState<TeamMember[]>([]);
+
+  useEffect(() => {
+    const fetchTeam = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'team'));
+        const teamData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as TeamMember));
+        setDbTeam(teamData);
+      } catch (e) {
+        console.error("Error fetching team:", e);
+      }
+    };
+    fetchTeam();
+  }, []);
+  
+  // Merge hardcoded team and DB team, removing duplicates by name
+  const allTeam = [...TEAM_MEMBERS.filter(m => m.name !== 'Desk')];
+  dbTeam.forEach(member => {
+    if (!allTeam.some(m => m.name === member.name)) {
+      allTeam.push(member);
+    }
+  });
   return (
     <div className="max-w-3xl">
       <h2 className="text-4xl font-serif font-black text-gray-900 mb-6">{t('about.aboutUs')}</h2>
@@ -37,8 +64,8 @@ export const AboutUs: React.FC = () => {
 
         <h3 className="text-2xl font-bold font-sans mt-8 mb-4">Our Team</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8 not-prose">
-          {TEAM_MEMBERS.filter(m => m.name !== 'Desk').map((member) => (
-            <div key={member.id} className="bg-white border border-gray-100 shadow-sm rounded-lg overflow-hidden flex flex-col hover:shadow-md transition-shadow">
+          {allTeam.map((member) => (
+            <Link to={`/id/${member.id}`} key={member.id} className="bg-white border border-gray-100 shadow-sm rounded-lg overflow-hidden flex flex-col hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 block group">
               {member.imageUrl && (
                 <div className="w-full bg-gray-50 flex justify-center items-center border-b border-gray-100">
                   <img 
@@ -55,18 +82,22 @@ export const AboutUs: React.FC = () => {
                   {member.phone && (
                     <p className="flex items-center">
                       <span className="font-semibold mr-2 w-12 text-gray-900">Phone:</span> 
-                      <a href={`tel:+91${member.phone}`} className="hover:text-red-700 transition-colors">{member.phone}</a>
+                      <span className="hover:text-red-700 transition-colors">{member.phone}</span>
                     </p>
                   )}
                   {member.email && (
                     <p className="flex items-center">
                       <span className="font-semibold mr-2 w-12 text-gray-900">Email:</span> 
-                      <a href={`mailto:${member.email}`} className="hover:text-red-700 transition-colors break-all">{member.email}</a>
+                      <span className="hover:text-red-700 transition-colors break-all">{member.email}</span>
                     </p>
                   )}
                 </div>
+                <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between text-sm text-red-700 font-medium group-hover:text-red-800">
+                  <span>View Digital ID</span>
+                  <span className="transform transition-transform group-hover:translate-x-1">→</span>
+                </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
         <h3 className="text-2xl font-bold font-sans mt-8 mb-4">Official Contact</h3>

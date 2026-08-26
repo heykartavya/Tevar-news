@@ -1,3 +1,4 @@
 /api/* /.netlify/functions/:splat 200
 /article/* /.netlify/functions/og 200
+/sitemap.xml /.netlify/functions/sitemap 200
 /* /index.html 200

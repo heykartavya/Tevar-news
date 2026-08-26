@@ -34,6 +34,72 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 
 const app = express();
+
+app.get('/sitemap.xml', async (req, res) => {
+  try {
+    const isCustomFirebase = !!process.env.VITE_FIREBASE_API_KEY;
+    const projectId = process.env.VITE_FIREBASE_PROJECT_ID || 'gen-lang-client-0445592793';
+    let databaseId = process.env.VITE_FIREBASE_DATABASE_ID;
+    if (!databaseId) {
+       databaseId = isCustomFirebase ? '(default)' : 'ai-studio-tevarnews-8a28c4b5-2980-4382-84ec-61e7f72ad2dd';
+    }
+    const apiKey = process.env.VITE_FIREBASE_API_KEY || 'AIzaSyBheQS3a1f3PKoVSEH2TqO40Jzv1n_P_hI';
+    
+    let firestoreUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/${databaseId}/documents/articles?key=${apiKey}&pageSize=100&orderBy=date%20desc`;
+    
+    let fsRes = await fetch(firestoreUrl);
+    let fsData = await fsRes.json();
+    
+    if (fsData.error && fsData.error.code === 404 && databaseId !== '(default)') {
+       firestoreUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/articles?key=${apiKey}&pageSize=100&orderBy=date%20desc`;
+       fsRes = await fetch(firestoreUrl);
+       fsData = await fsRes.json();
+    }
+
+    const host = req.get('host') || 'tevarnews.in';
+    const protocol = host.includes('localhost') ? 'http' : 'https';
+    const baseUrl = `${protocol}://${host}`;
+
+    let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">\n`;
+
+    xml += `  <url>\n    <loc>${baseUrl}/</loc>\n    <changefreq>hourly</changefreq>\n    <priority>1.0</priority>\n  </url>\n`;
+
+    if (fsData && fsData.documents) {
+      fsData.documents.forEach((doc) => {
+        const id = doc.name.split('/').pop();
+        const dateRaw = doc.fields?.date?.stringValue || new Date().toISOString();
+        let publishDate = new Date().toISOString();
+        try {
+           publishDate = new Date(dateRaw).toISOString();
+        } catch (e) {}
+        
+        const title = (doc.fields?.title?.stringValue || doc.fields?.titleHi?.stringValue || 'News').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+        
+        xml += `  <url>
+    <loc>${baseUrl}/article/${id}</loc>
+    <lastmod>${publishDate}</lastmod>
+    <news:news>
+      <news:publication>
+        <news:name>Tevar News</news:name>
+        <news:language>hi</news:language>
+      </news:publication>
+      <news:publication_date>${publishDate}</news:publication_date>
+      <news:title>${title}</news:title>
+    </news:news>
+  </url>\n`;
+      });
+    }
+
+    xml += `</urlset>`;
+
+    res.header('Content-Type', 'application/xml');
+    res.send(xml);
+  } catch (e) {
+    console.error(e);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
 const PORT = 3000;
 
 app.use(express.json({ limit: '50mb' }));
@@ -256,26 +322,60 @@ async function startServer() {
            return mainImg || 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&q=80&w=1000';
         };
 
+        
         const imageUrl = resolveImage(articleData.imageUrl || '', articleData.blocks || []);
         
         const url = `https://${req.get('host')}/article/${id}`;
+        const cleanTitle = title.replace(/"/g, '&quot;');
+        const cleanDesc = description; // Server already replaced quotes in description earlier
+        const datePublished = articleData.date || new Date().toISOString();
+        const author = articleData.author || 'Tevar News';
 
-
-        
+        const jsonLd = {
+          "@context": "https://schema.org",
+          "@type": "NewsArticle",
+          "headline": cleanTitle,
+          "image": [imageUrl],
+          "datePublished": datePublished,
+          "dateModified": datePublished,
+          "author": [{
+              "@type": "Person",
+              "name": author.replace(/"/g, '&quot;')
+          }],
+          "publisher": {
+              "@type": "Organization",
+              "name": "Tevar News",
+              "logo": {
+                  "@type": "ImageObject",
+                  "url": "https://tevarnews.in/logo.png"
+              }
+          }
+        };
         
         const metaTags = `
-          <meta property="og:title" content="${title.replace(/"/g, '&quot;')}" />
-          <meta property="og:description" content="${description}" />
+          <title>${cleanTitle}</title>
+          <meta name="description" content="${cleanDesc}" />
+          <link rel="canonical" href="${url}" />
+          
+          <meta property="og:title" content="${cleanTitle}" />
+          <meta property="og:description" content="${cleanDesc}" />
           <meta property="og:image" content="${imageUrl}" />
           <meta property="og:url" content="${url}" />
           <meta property="og:type" content="article" />
+          <meta property="og:site_name" content="Tevar News" />
+          
           <meta name="twitter:card" content="summary_large_image" />
-          <meta name="twitter:title" content="${title.replace(/"/g, '&quot;')}" />
-          <meta name="twitter:description" content="${description}" />
+          <meta name="twitter:title" content="${cleanTitle}" />
+          <meta name="twitter:description" content="${cleanDesc}" />
           <meta name="twitter:image" content="${imageUrl}" />
+          
+          <script type="application/ld+json">
+            ${JSON.stringify(jsonLd)}
+          </script>
         `;
         
         // Replace everything between <!-- OG_TAGS_START --> and <!-- OG_TAGS_END -->
+
         if (html.includes('<!-- OG_TAGS_START -->') && html.includes('<!-- OG_TAGS_END -->')) {
             html = html.replace(/<!-- OG_TAGS_START -->[\s\S]*?<!-- OG_TAGS_END -->/, metaTags);
         } else {

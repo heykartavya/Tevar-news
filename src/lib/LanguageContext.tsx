@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { SiteLanguage, Article } from './types';
+import { SiteLanguage, Article } from '../types';
 
 interface LanguageContextType {
   language: SiteLanguage;

@@ -120,25 +120,4 @@ export const MOCK_ARTICLES: Article[] = [
 
 import { TeamMember } from './types';
 
-export const TEAM_MEMBERS: TeamMember[] = [
-  {
-    id: 'shailendra-singh-tomar',
-    name: 'Shailendra Singh Tomar',
-    nameHi: 'शैलेंद्र सिंह तोमर',
-    designation: 'Founder & Editor in Chief',
-    designationHi: 'संस्थापक एवं प्रधान संपादक',
-    phone: '9695432994',
-    email: 'shailendrasingh35307@gmail.com',
-    imageUrl: 'https://res.cloudinary.com/mzqxmg0a/image/upload/v1787680775/WhatsApp_Image_2026-08-24_at_23.04.09.jpg'
-  },
-  {
-    id: 'desk',
-    name: 'Desk',
-    nameHi: 'डेस्क',
-    designation: 'Editorial Team',
-    designationHi: 'संपादकीय टीम',
-    phone: '',
-    email: 'contact@tevarnews.in',
-    imageUrl: ''
-  }
-];
+export const TEAM_MEMBERS: TeamMember[] = [];

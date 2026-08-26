@@ -28,6 +28,8 @@ export const handler = async (event: any) => {
     let title = 'Tevar News';
     let description = 'Latest News';
     let imageUrl = 'https://tevarnews.in/default-og.jpg';
+    let datePublished = new Date().toISOString();
+    let author = 'Tevar News';
     
     const getYouTubeId = (url: string) => {
       if (!url) return null;
@@ -71,6 +73,8 @@ export const handler = async (event: any) => {
       if (fsData && fsData.fields) {
         title = fsData.fields.title?.stringValue || fsData.fields.titleHi?.stringValue || title;
         description = fsData.fields.excerpt?.stringValue || fsData.fields.excerptHi?.stringValue || description;
+        author = fsData.fields.author?.stringValue || author;
+        datePublished = fsData.fields.date?.stringValue || datePublished;
         
         let fetchedImageUrl = fsData.fields.imageUrl?.stringValue || '';
         
@@ -88,6 +92,8 @@ export const handler = async (event: any) => {
           title = mockArticle.titleHi || mockArticle.title || title;
           description = mockArticle.excerptHi || mockArticle.excerpt || description;
           imageUrl = resolveImage(mockArticle.imageUrl || '', mockArticle.blocks || []);
+          author = mockArticle.author || author;
+          datePublished = mockArticle.date || datePublished;
         }
       }
     } catch (e) {
@@ -99,17 +105,51 @@ export const handler = async (event: any) => {
        imageUrl = defaultFallback;
     }
 
+    const jsonLd = {
+      "@context": "https://schema.org",
+      "@type": "NewsArticle",
+      "headline": title.replace(/"/g, '&quot;'),
+      "image": [imageUrl],
+      "datePublished": datePublished,
+      "dateModified": datePublished,
+      "author": [{
+          "@type": "Person",
+          "name": author.replace(/"/g, '&quot;')
+      }],
+      "publisher": {
+          "@type": "Organization",
+          "name": "Tevar News",
+          "logo": {
+              "@type": "ImageObject",
+              "url": "https://tevarnews.in/logo.png"
+          }
+      }
+    };
+
+    const cleanTitle = title.replace(/"/g, '&quot;');
+    const cleanDesc = description.replace(/"/g, '&quot;');
+    const finalUrl = `${baseUrl}/article/${articleId}`;
+
     const ogTags = `
-    <meta property="og:title" content="${title.replace(/"/g, '&quot;')}" />
-    <meta property="og:description" content="${description.replace(/"/g, '&quot;')}" />
+    <title>${cleanTitle}</title>
+    <meta name="description" content="${cleanDesc}" />
+    <link rel="canonical" href="${finalUrl}" />
+    
+    <meta property="og:title" content="${cleanTitle}" />
+    <meta property="og:description" content="${cleanDesc}" />
     <meta property="og:image" content="${imageUrl}" />
-    <meta property="og:url" content="${baseUrl}/article/${articleId}" />
+    <meta property="og:url" content="${finalUrl}" />
     <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="Tevar News" />
+    
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="${title.replace(/"/g, '&quot;')}" />
-    <meta name="twitter:description" content="${description.replace(/"/g, '&quot;')}" />
+    <meta name="twitter:title" content="${cleanTitle}" />
+    <meta name="twitter:description" content="${cleanDesc}" />
     <meta name="twitter:image" content="${imageUrl}" />
-    <title>${title.replace(/"/g, '&quot;')}</title>
+    
+    <script type="application/ld+json">
+      ${JSON.stringify(jsonLd)}
+    </script>
     `;
 
     html = html.replace(/<!-- OG_TAGS_START -->[\s\S]*?<!-- OG_TAGS_END -->/, ogTags);
