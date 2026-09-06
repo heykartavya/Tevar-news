@@ -15,6 +15,7 @@ export interface Article {
   category: string;
   author: string;
   date: string;
+  updatedAt?: string;
   imageUrl: string;
   readTime: string;
   isTrending?: boolean;
@@ -44,4 +45,5 @@ export interface TeamMember {
   aadhaar?: string;
   signatureUrl?: string;
   employeeId?: string;
+  order?: number;
 }

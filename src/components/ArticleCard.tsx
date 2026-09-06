@@ -58,26 +58,24 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article, featured = fa
   if (featured) {
     return (
       <article className="group cursor-pointer flex flex-col mb-8 border-b border-gray-200 pb-8 last:border-0 last:pb-0" onClick={handleCardClick}>
-        <div className="relative overflow-hidden mb-4 rounded-sm" onClick={handleImageClick}>
+        <div className="relative overflow-hidden mb-4 rounded-none">
           <img 
             src={getArticleImage(article)} 
             alt={l(article, 'title')} 
-            className="w-full h-[250px] sm:h-[400px] object-cover transition-transform duration-700 group-hover:scale-105"
+            className="w-full h-[220px] sm:h-[320px] object-cover transition-opacity duration-300 group-hover:opacity-90"
           />
-          <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-            <ZoomIn className="text-white drop-shadow-lg" size={48} />
-          </div>
+          
         </div>
         <div>
           <div className="flex items-center space-x-2 mb-3">
-            <span className="font-sans font-bold text-xs uppercase tracking-widest text-red-700">{t(`nav.${article.category.toLowerCase()}`)}</span>
+            <span className="font-sans font-bold text-xs uppercase tracking-widest text-red-800">{t(`nav.${article.category.toLowerCase().replace(/\s+/g, '')}`).startsWith('nav.') ? article.category : t(`nav.${article.category.toLowerCase().replace(/\s+/g, '')}`)}</span>
             <span className="text-gray-300 text-xs">•</span>
             <span className="font-sans text-xs text-gray-500">{article.readTime}</span>
           </div>
-          <h2 className="font-serif text-3xl md:text-4xl font-bold leading-tight mb-3 text-gray-900 group-hover:text-red-700 transition-colors word-break-all break-words max-w-full">
+          <h2 className="font-serif text-2xl md:text-3xl font-extrabold tracking-tight leading-tight mb-3 text-gray-900 group-hover:text-blue-800 transition-colors group-hover:underline max-w-full">
             {l(article, 'title')}
           </h2>
-          <p className="font-serif text-lg text-gray-600 leading-relaxed mb-4 word-break-all break-words max-w-full">
+          <p className="font-serif text-base text-gray-600 leading-relaxed line-clamp-3 mb-4 max-w-full">
             {l(article, 'excerpt')}
           </p>
           <div className="font-sans text-sm text-gray-500">
@@ -93,23 +91,21 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article, featured = fa
     return (
       <article className="group cursor-pointer flex gap-4 mb-6 border-b border-gray-100 pb-6 last:border-0 last:pb-0 items-start" onClick={handleCardClick}>
         <div className="flex-1">
-          <span className="block font-sans font-bold text-[10px] uppercase tracking-widest text-red-700 mb-1">{t(`nav.${article.category.toLowerCase()}`)}</span>
-          <h3 className="font-serif text-lg font-bold leading-snug mb-2 text-gray-900 group-hover:text-red-700 transition-colors word-break-all break-words max-w-full">
+          <span className="block font-sans font-bold text-[10px] uppercase tracking-widest text-red-800 mb-1">{t(`nav.${article.category.toLowerCase().replace(/\s+/g, '')}`).startsWith('nav.') ? article.category : t(`nav.${article.category.toLowerCase().replace(/\s+/g, '')}`)}</span>
+          <h3 className="font-serif text-base font-bold leading-tight mb-2 text-gray-900 group-hover:text-blue-800 transition-colors group-hover:underline max-w-full">
             {l(article, 'title')}
           </h3>
           <div className="font-sans text-xs text-gray-500">
             {article.readTime}
           </div>
         </div>
-        <div className="relative w-24 h-24 shrink-0 overflow-hidden rounded-sm" onClick={handleImageClick}>
+        <div className="relative w-24 h-24 shrink-0 overflow-hidden rounded-none">
           <img 
             src={getArticleImage(article)} 
             alt={l(article, 'title')} 
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+            className="w-full h-full object-cover transition-opacity duration-300 group-hover:opacity-90"
           />
-          <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-            <ZoomIn className="text-white drop-shadow-md" size={24} />
-          </div>
+          
         </div>
         {renderLightbox()}
       </article>
@@ -118,22 +114,20 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article, featured = fa
 
   return (
     <article className="group cursor-pointer flex flex-col h-full" onClick={handleCardClick}>
-      <div className="relative overflow-hidden mb-3 rounded-sm aspect-[4/3]" onClick={handleImageClick}>
+      <div className="relative overflow-hidden mb-3 rounded-none aspect-[4/3]">
         <img 
           src={getArticleImage(article)} 
           alt={l(article, 'title')} 
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+          className="w-full h-full object-cover transition-opacity duration-300 group-hover:opacity-90"
         />
-        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-          <ZoomIn className="text-white drop-shadow-md" size={32} />
-        </div>
+        
       </div>
       <div className="flex-1 flex flex-col">
-        <span className="block font-sans font-bold text-xs uppercase tracking-widest text-red-700 mb-2">{t(`nav.${article.category.toLowerCase()}`)}</span>
-        <h3 className="font-serif text-xl font-bold leading-snug mb-2 text-gray-900 group-hover:text-red-700 transition-colors line-clamp-3 word-break-all break-words max-w-full">
+        <span className="block font-sans font-bold text-xs uppercase tracking-widest text-red-800 mb-2">{t(`nav.${article.category.toLowerCase().replace(/\s+/g, '')}`).startsWith('nav.') ? article.category : t(`nav.${article.category.toLowerCase().replace(/\s+/g, '')}`)}</span>
+        <h3 className="font-serif text-base font-bold leading-tight tracking-tight mb-2 text-gray-900 group-hover:text-blue-800 transition-colors group-hover:underline line-clamp-3 max-w-full">
           {l(article, 'title')}
         </h3>
-        <p className="font-serif text-gray-600 text-sm leading-relaxed mb-4 line-clamp-2 flex-1 word-break-all break-words max-w-full">
+        <p className="font-serif text-gray-600 text-[13.5px] leading-relaxed mb-4 line-clamp-2 flex-1 max-w-full">
           {l(article, 'excerpt')}
         </p>
         <div className="font-sans text-xs text-gray-500 mt-auto">

@@ -131,7 +131,10 @@ export const ArticlePage: React.FC = () => {
       <Header />
       
       <main className="flex-1">
-        <article className="max-w-3xl mx-auto px-4 md:px-6 py-12">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-10">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+      <div className="lg:col-span-8 min-w-0">
+        <article>
           
           <Link to="/" className="inline-flex items-center text-sm font-sans font-medium text-gray-500 hover:text-black transition-colors mb-8">
             <ArrowLeft size={16} className="mr-2" />
@@ -149,7 +152,7 @@ export const ArticlePage: React.FC = () => {
               </span>
             </div>
             
-            <h1 className="text-4xl md:text-5xl font-serif font-black text-gray-900 leading-tight mb-6 word-break-all break-words">
+            <h1 className="text-4xl md:text-5xl font-serif font-black text-gray-900 leading-tight mb-6">
               {l(article, 'title')}
             </h1>
             
@@ -184,7 +187,7 @@ export const ArticlePage: React.FC = () => {
                         </div>
                       )}
                       <div className="font-sans text-gray-500 text-xs mt-1">
-                        {article.date}
+                        {article.date} &bull; {article.updatedAt ? `Updated: ${article.updatedAt}` : `Updated: ${article.date}, 12:00 PM IST`}
                       </div>
                     </div>
                   </div>
@@ -217,16 +220,16 @@ export const ArticlePage: React.FC = () => {
             </div>
           </header>
 
-          <div className="article-body word-break-all break-words">
+          <div className="article-body pr-2 md:pr-0">
             {article.blocks && article.blocks.length > 0 ? (
-              <div className="space-y-6 md:space-y-8 font-serif text-lg md:text-xl leading-relaxed text-gray-800">
+              <div className="space-y-5 md:space-y-6 font-serif text-[17px] md:text-[18px] leading-relaxed text-gray-900 text-left [&>p:first-of-type::first-letter]:text-[4.5rem] [&>p:first-of-type::first-letter]:font-serif [&>p:first-of-type::first-letter]:font-black [&>p:first-of-type::first-letter]:float-left [&>p:first-of-type::first-letter]:mr-3 [&>p:first-of-type::first-letter]:leading-[0.8] [&>p:first-of-type::first-letter]:text-black">
                 {article.blocks.map((block, idx) => {
                   if (block.type === 'text') {
                     return (
                       <div 
                         key={idx} 
-                        className="text-gray-800 [&>p]:mb-4 [&>h2]:text-2xl [&>h2]:font-bold [&>h2]:mt-8 [&>h2]:mb-4 word-break-all break-words max-w-full overflow-x-hidden"
-                        dangerouslySetInnerHTML={{ __html: l(block, 'content') }}
+                        className="text-gray-800 text-left [&>p]:mb-4 [&>h2]:text-2xl [&>h2]:font-bold [&>h2]:mt-8 [&>h2]:mb-4 max-w-full"
+                        dangerouslySetInnerHTML={{ __html: l(block, 'content').replace(/&nbsp;/g, ' ') }}
                       />
                     );
                   }
@@ -265,15 +268,40 @@ export const ArticlePage: React.FC = () => {
               </div>
             ) : (
               <div 
-                className="font-serif text-lg md:text-xl leading-relaxed text-gray-800 [&>p]:mb-6 [&>h2]:text-2xl [&>h2]:font-bold [&>h2]:mt-10 [&>h2]:mb-4 word-break-all break-words max-w-full overflow-x-hidden"
-                dangerouslySetInnerHTML={{ __html: l(article, 'content') }}
+                className="font-serif text-[17px] md:text-[18px] leading-relaxed text-gray-900 text-left [&>p]:mb-5 [&>h2]:text-2xl [&>h2]:font-bold [&>h2]:mt-8 [&>h2]:mb-4 max-w-full [&>p:first-of-type::first-letter]:text-[4.5rem] [&>p:first-of-type::first-letter]:font-serif [&>p:first-of-type::first-letter]:font-black [&>p:first-of-type::first-letter]:float-left [&>p:first-of-type::first-letter]:mr-3 [&>p:first-of-type::first-letter]:leading-[0.8] [&>p:first-of-type::first-letter]:text-black"
+                dangerouslySetInnerHTML={{ __html: l(article, 'content').replace(/&nbsp;/g, ' ') }}
               />
             )}
           </div>
         </article>
+      </div>
 
+      {/* Right Sidebar */}
+      <aside className="lg:col-span-4 hidden lg:block border-l border-gray-100 pl-8">
         {relatedArticles.length > 0 && (
-          <section className="bg-gray-50 border-t border-gray-200 py-16 mt-12">
+          <div className="sticky top-24">
+            <h3 className="font-serif font-bold text-xl mb-6 text-gray-900 border-b border-black pb-2">More from {(t(`nav.${article.category.toLowerCase().replace(/\s+/g, '')}`).startsWith('nav.') ? article.category : t(`nav.${article.category.toLowerCase().replace(/\s+/g, '')}`))}</h3>
+            <div className="flex flex-col gap-6">
+              {relatedArticles.slice(0, 4).map((relatedArticle) => (
+                <ArticleCard 
+                  key={'side-'+relatedArticle.id} 
+                  article={relatedArticle} 
+                  compact={true}
+                  onClick={(a) => {
+                    window.scrollTo(0,0);
+                    navigate(`/article/${a.id}`);
+                  }} 
+                />
+              ))}
+            </div>
+          </div>
+        )}
+      </aside>
+    </div>
+  </div>
+
+  {relatedArticles.length > 0 && (
+          <section className="bg-white border-t-2 border-black py-16 mt-12">
             <div className="max-w-6xl mx-auto px-4 md:px-6">
               <h2 className="font-sans font-bold text-2xl uppercase tracking-wider mb-8 text-gray-900 text-center">
                 Related Articles

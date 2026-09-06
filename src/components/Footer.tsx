@@ -43,6 +43,7 @@ export const Footer: React.FC = () => {
           <div>
             <h3 className="font-sans font-bold uppercase tracking-wider text-sm mb-4 text-zinc-200">{t('about.title')}</h3>
             <ul className="space-y-3 font-sans text-sm text-zinc-400">
+              <li><Link onClick={scrollToTop} to="/about/our-team" className="hover:text-white transition-colors">{t('about.ourTeam')}</Link></li>
               <li><Link onClick={scrollToTop} to="/about/about-us" className="hover:text-white transition-colors">{t('about.aboutUs')}</Link></li>
               <li><Link onClick={scrollToTop} to="/about/contact-us" className="hover:text-white transition-colors">{t('about.contactUs')}</Link></li>
               <li><Link onClick={scrollToTop} to="/about/advertise" className="hover:text-white transition-colors">{t('about.advertise')}</Link></li>

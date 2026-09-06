@@ -6,6 +6,7 @@ import { ArticlePage } from './pages/ArticlePage';
 import { IDCard } from './pages/IDCard';
 import { AboutLayout } from './pages/about/AboutLayout';
 import { AboutUs } from './pages/about/AboutUs';
+import { OurTeam } from './pages/about/OurTeam';
 import { ContactUs } from './pages/about/ContactUs';
 import { EditorialPolicy } from './pages/about/EditorialPolicy';
 import { CorrectionPolicy } from './pages/about/CorrectionPolicy';
@@ -28,6 +29,7 @@ export default function App() {
           <Route path="/about" element={<AboutLayout />}>
             <Route index element={<Navigate to="about-us" replace />} />
             <Route path="about-us" element={<AboutUs />} />
+            <Route path="our-team" element={<OurTeam />} />
             <Route path="contact-us" element={<ContactUs />} />
             <Route path="editorial-policy" element={<EditorialPolicy />} />
             <Route path="correction-policy" element={<CorrectionPolicy />} />

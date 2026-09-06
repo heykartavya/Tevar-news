@@ -10,6 +10,7 @@ export const AboutLayout: React.FC = () => {
 
   const links = [
     { path: '/about/about-us', label: t('about.aboutUs') },
+    { path: '/about/our-team', label: t('about.ourTeam') },
     { path: '/about/contact-us', label: t('about.contactUs') },
     { path: '/about/editorial-policy', label: t('about.editorialPolicy') },
     { path: '/about/correction-policy', label: t('about.correctionPolicy') },

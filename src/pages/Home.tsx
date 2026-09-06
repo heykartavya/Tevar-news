@@ -56,7 +56,8 @@ export const Home: React.FC = () => {
   }
 
   const heroArticle = displayedArticles[0];
-  const gridArticles = displayedArticles.slice(1, 5);
+  const subHeroArticles = displayedArticles.slice(1, 3);
+  const gridArticles = displayedArticles.slice(3, 9);
 
   const usedIds = new Set<string>();
   if (heroArticle) usedIds.add(heroArticle.id);
@@ -139,7 +140,8 @@ export const Home: React.FC = () => {
                 <div className="my-10 hidden sm:block">
                   <AdSpace format="leaderboard" />
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-10 border-t border-gray-200 pt-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-8 pt-4">
+                  {/* Add horizontal dividers via child classes */}
                   <GridSkeleton />
                   <GridSkeleton />
                   <GridSkeleton />
@@ -201,12 +203,21 @@ export const Home: React.FC = () => {
             <div className="grid grid-cols-12 gap-8 lg:gap-12">
               {/* Main Content Column */}
               <div className="col-span-12 lg:col-span-8">
-                {/* Hero Section */}
-                {heroArticle && (
-                  <div className="mb-10">
-                    <ArticleCard article={heroArticle} featured={true} onClick={(article) => navigate(`/article/${article.id}`)} />
+                {/* Top Stories Layout */}
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-6 mb-8 border-b-[3px] border-black pb-8">
+                  {heroArticle && (
+                    <div className="md:col-span-8">
+                      <ArticleCard article={heroArticle} featured={true} onClick={(article) => navigate(`/article/${article.id}`)} />
+                    </div>
+                  )}
+                  <div className="md:col-span-4 flex flex-col gap-6 md:border-l md:border-gray-300 md:pl-6">
+                    {subHeroArticles.map(article => (
+                      <div key={'sub-'+article.id} className="flex-1">
+                        <ArticleCard article={article} compact={false} onClick={(a) => navigate(`/article/${a.id}`)} />
+                      </div>
+                    ))}
                   </div>
-                )}
+                </div>
 
                 {/* Mid-content Ad */}
                 <div className="my-10 hidden sm:block">
@@ -214,9 +225,9 @@ export const Home: React.FC = () => {
                 </div>
 
                 {/* Articles Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-10 border-t border-gray-200 pt-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-12 pt-4">
                   {gridArticles.map(article => (
-                    <ArticleCard key={article.id} article={article} onClick={(article) => navigate(`/article/${article.id}`)} />
+                    <div className="border-b border-gray-100 pb-8 h-full"><ArticleCard key={article.id} article={article} onClick={(article) => navigate(`/article/${article.id}`)} /></div>
                   ))}
                 </div>
               </div>
@@ -289,6 +300,13 @@ export const Home: React.FC = () => {
                 </div>
 
 
+        
+
+              </aside>
+            </div>
+          )}
+        </div>
+
         {/* Video / Reels Section */}
         {!loading && displayedArticles.length > 0 && (
           <div className="w-full bg-zinc-900 py-12 mt-12 border-t-4 border-red-700">
@@ -302,7 +320,7 @@ export const Home: React.FC = () => {
                 </button>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-                {articles.filter(a => a.category === 'Video' || true).slice(0, 4).map((article, i) => (
+                {articles.filter(a => a.category === 'Video' || a.category === 'Reels').slice(0, 4).map((article, i) => (
                   <div key={`video-${article.id}-${i}`} className="relative group cursor-pointer aspect-[9/16] bg-zinc-800 rounded-md overflow-hidden" onClick={() => navigate(`/article/${article.id}`)}>
                     <img src={getArticleImage(article)} alt="thumbnail" className="absolute inset-0 w-full h-full object-cover opacity-70 group-hover:opacity-100 transition-opacity duration-300" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
@@ -323,10 +341,6 @@ export const Home: React.FC = () => {
           </div>
         )}
 
-              </aside>
-            </div>
-          )}
-        </div>
       </main>
 
       <Footer />

@@ -6,7 +6,7 @@ import { TeamMember } from '../types';
 import { getArticles, addArticle, deleteArticle, seedDatabase } from '../lib/db';
 import { Article } from '../types';
 import { CATEGORIES, MOCK_ARTICLES, TEAM_MEMBERS } from '../data';
-import { Trash2, Plus, LogOut, Database, MoveUp, MoveDown, Users, FileText } from 'lucide-react';
+import { Trash2, Edit, Plus, LogOut, Database, MoveUp, MoveDown, Users, FileText } from 'lucide-react';
 import { TeamManager } from '../components/TeamManager';
 import { BlockEditor } from '../components/BlockEditor';
 
@@ -82,45 +82,58 @@ export const Admin: React.FC = () => {
     await signOut(auth);
   };
 
+
   const handleAddArticle = async (e: React.FormEvent) => {
     e.preventDefault();
     setTranslating(true);
     try {
-      // Publisher types in Hindi, bypass translation
       const blocks = (newArticle.blocks || []).map((block) => {
         return {
           ...block,
-          contentEn: block.content,
-          contentHi: block.content
+          contentEn: block.contentEn || block.content,
+          contentHi: block.contentHi || block.content
         };
       });
 
       const firstImageBlock = blocks.find(b => b.type === 'image' && b.content);
-      const imageUrl = firstImageBlock ? firstImageBlock.content : 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&q=80&w=1000'; // Default news fallback image
-
+      const imageUrl = firstImageBlock ? firstImageBlock.content : (newArticle.imageUrl || 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&q=80&w=1000');
+      
+      const now = new Date();
+      const istTime = now.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' }) + ' IST';
+      
       const rawArticle = {
         ...newArticle,
         blocks: blocks,
         imageUrl,
-        titleEn: newArticle.title,
-        titleHi: newArticle.title,
-        excerptEn: newArticle.excerpt,
-        excerptHi: newArticle.excerpt,
-        contentEn: newArticle.content || '',
-        contentHi: newArticle.content || '',
-        originalLanguage: 'hi'
+        titleEn: newArticle.titleEn || newArticle.title,
+        titleHi: newArticle.titleHi || newArticle.title,
+        excerptEn: newArticle.excerptEn || newArticle.excerpt,
+        excerptHi: newArticle.excerptHi || newArticle.excerpt,
+        contentEn: newArticle.contentEn || newArticle.content || '',
+        contentHi: newArticle.contentHi || newArticle.content || '',
+        originalLanguage: newArticle.originalLanguage || 'hi'
       };
       
-      // Strip undefined values to prevent Firestore errors
+      if (editArticleId) {
+        rawArticle.updatedAt = istTime;
+      }
+
       const articleToSave = Object.fromEntries(
         Object.entries(rawArticle).filter(([_, v]) => v !== undefined)
       );
 
-      await addArticle(articleToSave as Omit<Article, 'id'>);
+      if (editArticleId) {
+        await updateArticle(editArticleId, articleToSave);
+        setEditArticleId(null);
+      } else {
+        await addArticle(articleToSave as Omit<Article, 'id'>);
+      }
+      
       setNewArticle({
         title: '', excerpt: '', content: '', blocks: [], category: 'World', author: '', date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }), readTime: '5 min read', isTrending: false
       });
       fetchArticles();
+
     } catch (err) {
       console.error(err);
       alert(`Error adding article: ${err instanceof Error ? err.message : JSON.stringify(err)}`);
@@ -239,7 +252,7 @@ export const Admin: React.FC = () => {
 
               <div className="bg-white shadow overflow-hidden sm:rounded-lg mb-8">
                 <div className="px-4 py-5 sm:p-6">
-                  <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">Publish New Article</h3>
+                  <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">{editArticleId ? "Edit Article" : "Publish New Article"}</h3>
                   <form onSubmit={handleAddArticle} className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
                     <div className="sm:col-span-4">
                       <label className="block text-sm font-medium text-gray-700">Title</label>
@@ -285,8 +298,13 @@ export const Admin: React.FC = () => {
                     </div>
 
                     <div className="sm:col-span-6 flex justify-end">
+                      {editArticleId && (
+                        <button type="button" onClick={() => { setEditArticleId(null); setNewArticle({ title: '', excerpt: '', content: '', blocks: [], category: 'World', author: '', date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }), readTime: '5 min read', isTrending: false }); }} className="mr-4 inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                          Cancel
+                        </button>
+                      )}
                       <button type="submit" disabled={translating} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-700 hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50">
-                        <Plus size={16} className="mr-2" /> {translating ? 'Translating & Publishing...' : 'Publish Article'}
+                        <Plus size={16} className="mr-2" /> {translating ? (editArticleId ? "Updating..." : "Translating & Publishing...") : (editArticleId ? "Update Article" : "Publish Article")}
                       </button>
                     </div>
                   </form>
@@ -318,7 +336,14 @@ export const Admin: React.FC = () => {
                               </div>
                             </div>
                           </div>
-                          <div className="ml-5 flex-shrink-0">
+                          <div className="ml-5 flex-shrink-0 flex space-x-2">
+                            <button onClick={() => {
+                              setEditArticleId(article.id);
+                              setNewArticle(article);
+                              window.scrollTo({ top: 0, behavior: 'smooth' });
+                            }} className="p-2 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-full transition-colors">
+                              <Edit size={20} />
+                            </button>
                             <button onClick={() => handleDelete(article.id)} className="p-2 text-red-600 hover:text-red-900 hover:bg-red-50 rounded-full transition-colors">
                               <Trash2 size={20} />
                             </button>

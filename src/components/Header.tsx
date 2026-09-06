@@ -109,14 +109,14 @@ export const Header: React.FC<HeaderProps> = ({ activeCategory, onCategoryChange
 
       {/* Navigation Categories */}
       {onCategoryChange && (
-        <nav className="border-y border-gray-200 hidden md:block">
+        <nav className="border-t border-b-[3px] border-black hidden md:block">
           <div className="max-w-7xl mx-auto px-6">
             <ul className="flex justify-center space-x-8 lg:space-x-12 py-3 overflow-x-auto hide-scrollbar">
               {CATEGORIES.map((category) => (
                 <li key={category}>
                   <button
                     onClick={() => onCategoryChange(category as Category)}
-                    className={`font-sans text-sm tracking-wide transition-colors whitespace-nowrap ${
+                    className={`font-sans text-[13px] tracking-wider uppercase font-bold transition-colors whitespace-nowrap ${
                       activeCategory === category 
                         ? 'font-bold text-black border-b-2 border-black pb-1' 
                         : 'text-gray-600 hover:text-black font-medium'

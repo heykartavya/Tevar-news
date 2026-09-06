@@ -46,7 +46,7 @@ export const ArticleModal: React.FC<ArticleModalProps> = ({ article, onClose }) 
         <div className="p-6 md:p-10 lg:p-12">
           <div className="flex items-center space-x-3 mb-6">
             <span className="font-sans font-bold text-sm uppercase tracking-widest text-red-700 bg-red-50 px-3 py-1 rounded-sm">
-              {t(`nav.${article.category.toLowerCase()}`)}
+              {t(`nav.${article.category.toLowerCase().replace(/\s+/g, '')}`).startsWith('nav.') ? article.category : t(`nav.${article.category.toLowerCase().replace(/\s+/g, '')}`)}
             </span>
             <span className="text-gray-300">•</span>
             <span className="font-sans text-sm text-gray-500">
