@@ -3,12 +3,13 @@ import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, on
 import { auth, db } from '../lib/firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import { TeamMember } from '../types';
-import { getArticles, addArticle, deleteArticle, seedDatabase } from '../lib/db';
+import { getArticles, addArticle, updateArticle, deleteArticle, seedDatabase } from '../lib/db';
 import { Article } from '../types';
 import { CATEGORIES, MOCK_ARTICLES, TEAM_MEMBERS } from '../data';
 import { Trash2, Edit, Plus, LogOut, Database, MoveUp, MoveDown, Users, FileText } from 'lucide-react';
 import { TeamManager } from '../components/TeamManager';
 import { BlockEditor } from '../components/BlockEditor';
+import { AdminListSkeleton } from '../components/ArticleSkeleton';
 
 export const Admin: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -22,6 +23,7 @@ export const Admin: React.FC = () => {
   const [dbTeam, setDbTeam] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   
+  const [editArticleId, setEditArticleId] = useState<string | null>(null);
   const [newArticle, setNewArticle] = useState<Partial<Article>>({
     title: '', excerpt: '', content: '', blocks: [], category: 'World', author: '', date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }), readTime: '5 min read', isTrending: false
   });
@@ -313,7 +315,7 @@ export const Admin: React.FC = () => {
 
               <div className="bg-white shadow overflow-hidden sm:rounded-md">
                 {loading ? (
-                  <div className="p-8 text-center text-gray-500">Loading articles...</div>
+                  <AdminListSkeleton />
                 ) : articles.length === 0 ? (
                   <div className="p-8 text-center text-gray-500">No articles found in database.</div>
                 ) : (

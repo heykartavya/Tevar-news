@@ -4,7 +4,7 @@ import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
 import { AdSpace } from '../components/AdSpace';
 import { ArticleCard } from '../components/ArticleCard';
-import { HeroSkeleton, GridSkeleton, CompactSkeleton, TrendingSkeleton } from '../components/ArticleSkeleton';
+import { HeroSkeleton, GridSkeleton, CompactSkeleton, TrendingSkeleton, VideoGridSkeleton } from '../components/ArticleSkeleton';
 import { Category, Article } from '../types';
 import { MOCK_ARTICLES } from '../data';
 import { getArticleImage } from '../lib/utils';
@@ -307,7 +307,8 @@ export const Home: React.FC = () => {
           )}
         </div>
 
-        {/* Video / Reels Section */}
+                {/* Video / Reels Section */}
+        {loading && <VideoGridSkeleton />}
         {!loading && displayedArticles.length > 0 && (
           <div className="w-full bg-zinc-900 py-12 mt-12 border-t-4 border-red-700">
             <div className="max-w-7xl mx-auto px-4 md:px-6">

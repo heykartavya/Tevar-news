@@ -5,6 +5,7 @@ import { getArticleById, getRelatedArticles } from '../lib/db';
 import { MOCK_ARTICLES, TEAM_MEMBERS } from '../data';
 import { Article } from '../types';
 import { Header } from '../components/Header';
+import { ArticlePageSkeleton, GridSkeleton } from '../components/ArticleSkeleton';
 import { Footer } from '../components/Footer';
 import { ArticleCard } from '../components/ArticleCard';
 import { useLanguage } from '../lib/LanguageContext';
@@ -89,7 +90,7 @@ export const ArticlePage: React.FC = () => {
       <div className="min-h-screen bg-white flex flex-col">
         <Header />
         <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-20 flex justify-center">
-          <div className="w-12 h-12 border-4 border-red-700 border-t-transparent rounded-full animate-spin"></div>
+          <ArticlePageSkeleton />
         </main>
         <Footer />
       </div>
