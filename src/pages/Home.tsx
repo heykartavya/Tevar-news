@@ -227,7 +227,7 @@ export const Home: React.FC = () => {
                 {/* Articles Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-12 pt-4">
                   {gridArticles.map(article => (
-                    <div className="border-b border-gray-100 pb-8 h-full"><ArticleCard key={article.id} article={article} onClick={(article) => navigate(`/article/${article.id}`)} /></div>
+                    <div key={article.id} className="border-b border-gray-100 pb-8 h-full"><ArticleCard article={article} onClick={(article) => navigate(`/article/${article.id}`)} /></div>
                   ))}
                 </div>
               </div>
