@@ -3,12 +3,38 @@ import { db } from './firebase';
 import { Article } from '../types';
 
 export const getArticles = async (): Promise<Article[]> => {
-  const q = query(collection(db, 'articles'), orderBy('date', 'desc'));
-  const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map(doc => ({
+  const querySnapshot = await getDocs(collection(db, 'articles'));
+  const articles = querySnapshot.docs.map(doc => ({
     id: doc.id,
     ...doc.data()
   })) as Article[];
+
+  // Robust client-side sort: newest first
+  // 1. By createdAt timestamp if available
+  // 2. Fallback to parsing date string (e.g. "Sep 19, 2026", "Aug 25, 2026")
+  return articles.sort((a, b) => {
+    const timeA = typeof a.createdAt === 'number' 
+      ? a.createdAt 
+      : (a.createdAt ? new Date(a.createdAt).getTime() : 0);
+    const timeB = typeof b.createdAt === 'number' 
+      ? b.createdAt 
+      : (b.createdAt ? new Date(b.createdAt).getTime() : 0);
+
+    if (timeA && timeB) {
+      return timeB - timeA;
+    }
+    if (timeA && !timeB) return -1;
+    if (!timeA && timeB) return 1;
+
+    // Fallback: parse date string
+    const dateA = a.date ? new Date(a.date).getTime() : 0;
+    const dateB = b.date ? new Date(b.date).getTime() : 0;
+    if (!isNaN(dateA) && !isNaN(dateB) && dateA !== dateB) {
+      return dateB - dateA;
+    }
+
+    return (b.id || '').localeCompare(a.id || '');
+  });
 };
 
 export const getArticleById = async (id: string): Promise<Article | null> => {

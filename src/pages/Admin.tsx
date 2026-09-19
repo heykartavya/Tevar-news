@@ -6,7 +6,7 @@ import { TeamMember } from '../types';
 import { getArticles, addArticle, updateArticle, deleteArticle, seedDatabase } from '../lib/db';
 import { Article } from '../types';
 import { CATEGORIES, MOCK_ARTICLES, TEAM_MEMBERS } from '../data';
-import { Trash2, Edit, Plus, LogOut, Database, MoveUp, MoveDown, Users, FileText, BellRing, Send } from 'lucide-react';
+import { Trash2, Edit, Plus, LogOut, Database, MoveUp, MoveDown, Users, FileText, BellRing, Send, CheckCircle2 } from 'lucide-react';
 import { TeamManager } from '../components/TeamManager';
 import { BlockEditor } from '../components/BlockEditor';
 import { AdminListSkeleton } from '../components/ArticleSkeleton';
@@ -17,7 +17,7 @@ const getInitialArticleState = (): Partial<Article> => ({
   excerpt: '',
   content: '',
   blocks: [],
-  category: 'World',
+  category: 'National',
   author: '',
   date: new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', month: 'short', day: 'numeric', year: 'numeric' }),
   readTime: '5 min read',
@@ -42,6 +42,8 @@ export const Admin: React.FC = () => {
   const [translating, setTranslating] = useState(false);
   const [sendPushAlert, setSendPushAlert] = useState(false);
   const [sendingAlertId, setSendingAlertId] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [newlyAddedArticleId, setNewlyAddedArticleId] = useState<string | null>(null);
 
   const allTeam = [...TEAM_MEMBERS];
   dbTeam.forEach(member => {
@@ -161,6 +163,7 @@ export const Admin: React.FC = () => {
       if (editArticleId) {
         rawArticle.updatedAt = istTime;
       } else {
+        rawArticle.createdAt = Date.now();
         if (!rawArticle.date) {
           rawArticle.date = new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', month: 'short', day: 'numeric', year: 'numeric' });
         }
@@ -171,6 +174,7 @@ export const Admin: React.FC = () => {
       );
 
       let savedId = editArticleId;
+      const isEditing = Boolean(editArticleId);
       if (editArticleId) {
         await updateArticle(editArticleId, articleToSave);
         setEditArticleId(null);
@@ -221,7 +225,21 @@ export const Admin: React.FC = () => {
       
       setSendPushAlert(false);
       setNewArticle(getInitialArticleState());
+      if (savedId) {
+        setNewlyAddedArticleId(savedId);
+      }
+      setSuccessMessage(isEditing ? 'लेख सफलतापूर्वक अपडेट किया गया! (Article updated successfully)' : 'लेख सफलतापूर्वक प्रकाशित हुआ और सूची में सबसे ऊपर जोड़ा गया! (Article published at the top!)');
+      setTimeout(() => setSuccessMessage(null), 7000);
+      
       await fetchArticles();
+
+      // Smoothly view the articles list
+      setTimeout(() => {
+        const listElem = document.getElementById('articles-list-section');
+        if (listElem) {
+          listElem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
 
     } catch (err) {
       console.error(err);
@@ -403,6 +421,21 @@ export const Admin: React.FC = () => {
             <TeamManager />
           ) : (
             <>
+              {successMessage && (
+                <div className="mb-6 bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-lg flex items-center justify-between shadow-sm animate-fade-in">
+                  <div className="flex items-center space-x-2.5">
+                    <CheckCircle2 size={20} className="text-emerald-600 flex-shrink-0" />
+                    <span className="font-medium text-sm">{successMessage}</span>
+                  </div>
+                  <button 
+                    onClick={() => setSuccessMessage(null)}
+                    className="text-emerald-600 hover:text-emerald-900 text-xs font-semibold px-2 py-1 rounded"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              )}
+
               <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
                 <div className="flex items-center space-x-3">
                   <h2 className="text-xl font-semibold text-gray-900">Manage Articles</h2>
@@ -495,21 +528,26 @@ export const Admin: React.FC = () => {
                 </div>
               </div>
 
-              <div className="bg-white shadow overflow-hidden sm:rounded-md">
+              <div id="articles-list-section" className="bg-white shadow overflow-hidden sm:rounded-md">
                 {loading ? (
                   <AdminListSkeleton />
                 ) : articles.length === 0 ? (
                   <div className="p-8 text-center text-gray-500">No articles found in database.</div>
                 ) : (
                   <ul className="divide-y divide-gray-200">
-                    {articles.map((article) => (
-                      <li key={article.id}>
+                    {articles.map((article, idx) => (
+                      <li key={article.id} className={newlyAddedArticleId === article.id ? "bg-amber-50/60 transition-colors duration-1000" : ""}>
                         <div className="px-4 py-4 flex items-center sm:px-6">
                           <div className="min-w-0 flex-1 sm:flex sm:items-center sm:justify-between">
                             <div className="truncate">
-                              <div className="flex text-sm">
+                              <div className="flex items-center text-sm gap-2">
                                 <p className="font-medium text-red-700 truncate">{article.title}</p>
-                                <p className="ml-1 flex-shrink-0 font-normal text-gray-500">
+                                {idx === 0 && (
+                                  <span className="flex-shrink-0 text-[10px] uppercase font-bold tracking-wider bg-red-100 text-red-800 px-1.5 py-0.5 rounded">
+                                    Latest
+                                  </span>
+                                )}
+                                <p className="flex-shrink-0 font-normal text-gray-500">
                                   in {article.category}
                                 </p>
                               </div>

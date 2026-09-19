@@ -27,13 +27,13 @@ export const Home: React.FC = () => {
     const fetchArticles = async () => {
       try {
         const fetchedArticles = await getArticles();
-        if (fetchedArticles.length > 10) {
-          setArticles(fetchedArticles);
-        } else {
-          // Fallback/merge with mock data to keep the site lively
+        if (fetchedArticles.length > 0) {
+          // Put fresh real articles first, then mock articles as supplemental filler
           const existingTitles = new Set(fetchedArticles.map(a => a.title));
           const mockToAdd = MOCK_ARTICLES.filter(m => !existingTitles.has(m.title));
           setArticles([...fetchedArticles, ...mockToAdd]);
+        } else {
+          setArticles(MOCK_ARTICLES);
         }
       } catch (error) {
         console.error("Error fetching articles:", error);

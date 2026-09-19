@@ -15,6 +15,7 @@ export interface Article {
   category: string;
   author: string;
   date: string;
+  createdAt?: number | string;
   updatedAt?: string;
   imageUrl: string;
   readTime: string;
