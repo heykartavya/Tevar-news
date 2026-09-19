@@ -527,6 +527,10 @@ app.post("/api/notifications/send-breaking-news", async (req, res) => {
   }
 });
 
+app.get("/api/notifications/send-breaking-news", (req, res) => {
+  res.json({ status: "ok", message: "Send POST request to this endpoint with { title, body, articleId, imageUrl } to dispatch breaking news alerts." });
+});
+
 
 
 // Global Error Handler for Express to return JSON instead of HTML
@@ -692,6 +696,11 @@ async function startServer() {
       console.error("Error in SSR route:", e);
       next();
     }
+  });
+
+  // Ensure any API route not matched returns JSON 404, never fallback HTML
+  app.all('/api/*', (req, res) => {
+    res.status(404).json({ error: `API route ${req.method} ${req.originalUrl} not found` });
   });
 
   if (process.env.NODE_ENV !== "production") {

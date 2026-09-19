@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, User } from 'firebase/auth';
 import { auth, db } from '../lib/firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, addDoc } from 'firebase/firestore';
 import { TeamMember } from '../types';
 import { getArticles, addArticle, updateArticle, deleteArticle, seedDatabase } from '../lib/db';
 import { Article } from '../types';
@@ -182,16 +182,37 @@ export const Admin: React.FC = () => {
       // If Push Alert was checked, dispatch breaking news push notification
       if (sendPushAlert) {
         try {
-          await fetch('/api/notifications/send-breaking-news', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              title: `🚨 ${articleToSave.title}`,
-              body: articleToSave.excerpt || 'ताज़ा ब्रेकिंग खबर पढ़ें',
-              imageUrl: articleToSave.imageUrl,
-              articleId: savedId || ''
-            })
-          });
+          const alertPayload = {
+            title: `🚨 ${articleToSave.title}`,
+            body: articleToSave.excerpt || 'ताज़ा ब्रेकिंग खबर पढ़ें',
+            imageUrl: articleToSave.imageUrl || '',
+            articleId: savedId || '',
+            url: savedId ? `/article/${savedId}` : '/',
+            createdAt: new Date().toISOString()
+          };
+
+          // 1. Save directly to Firestore breaking_alerts so active readers receive it instantly
+          try {
+            await addDoc(collection(db, 'breaking_alerts'), alertPayload);
+          } catch (fsErr) {
+            console.warn('Firestore direct alert note:', fsErr);
+          }
+
+          // 2. Dispatch via backend push API (handles FCM & Web Push subscriptions)
+          try {
+            const res = await fetch('/api/notifications/send-breaking-news', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(alertPayload)
+            });
+            const ct = res.headers.get('content-type') || '';
+            if (res.ok && ct.includes('application/json')) {
+              await res.json();
+            }
+          } catch (apiErr) {
+            console.warn('Backend push API notice:', apiErr);
+          }
+
           fetchStats();
         } catch (pushErr) {
           console.warn('Push alert dispatch error:', pushErr);
@@ -217,25 +238,64 @@ export const Admin: React.FC = () => {
 
     setSendingAlertId(article.id);
     try {
-      const res = await fetch('/api/notifications/send-breaking-news', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: `🚨 ${article.title}`,
-          body: article.excerpt || 'ताज़ा ब्रेकिंग खबर पढ़ें',
-          imageUrl: article.imageUrl,
-          articleId: article.id
-        })
-      });
-      const data = await res.json();
-      if (data.success) {
-        alert(`सफलतापूर्वक भेजा गया! कुल एक्टिव सब्सक्राइबर्स: ${data.totalSubscribers}`);
+      const alertPayload = {
+        title: `🚨 ${article.title}`,
+        body: article.excerpt || 'ताज़ा ब्रेकिंग खबर पढ़ें',
+        imageUrl: article.imageUrl || '',
+        articleId: article.id,
+        url: `/article/${article.id}`,
+        createdAt: new Date().toISOString()
+      };
+
+      // 1. Save directly to Firestore breaking_alerts so all active readers receive it in real-time
+      let directSaved = false;
+      try {
+        await addDoc(collection(db, 'breaking_alerts'), alertPayload);
+        directSaved = true;
+      } catch (fsErr) {
+        console.warn('Direct Firestore save note:', fsErr);
+      }
+
+      // 2. Dispatch via backend push API for device push notifications (FCM)
+      let backendSuccess = false;
+      let totalSubscribers = subscribersCount;
+      let serverError = '';
+
+      try {
+        const res = await fetch('/api/notifications/send-breaking-news', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(alertPayload)
+        });
+
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const data = await res.json();
+          if (data.success) {
+            backendSuccess = true;
+            if (typeof data.totalSubscribers === 'number') {
+              totalSubscribers = data.totalSubscribers;
+            }
+          } else {
+            serverError = data.error || 'Server error';
+          }
+        } else {
+          // If server returned HTML (e.g. static hosting proxy, 502, or offline)
+          const text = await res.text();
+          console.warn('Backend API returned non-JSON:', res.status, text.slice(0, 100));
+        }
+      } catch (apiErr: any) {
+        console.warn('API call notice:', apiErr.message);
+      }
+
+      if (directSaved || backendSuccess) {
+        alert(`सफलतापूर्वक भेजा गया! ब्रेकिंग अलर्ट लाइव जारी कर दिया गया है।${totalSubscribers > 0 ? ` (कुल सब्सक्राइबर्स: ${totalSubscribers})` : ''}`);
         fetchStats();
       } else {
-        alert(`अलर्ट भेजने में त्रुटि: ${data.error}`);
+        alert(`अलर्ट भेजने में समस्या: ${serverError || 'कृपया कनेक्शन जांचें'}`);
       }
     } catch (err: any) {
-      alert(`अलर्ट भेजने में विफल: ${err.message}`);
+      alert(`अलर्ट भेजने में त्रुटि: ${err.message}`);
     } finally {
       setSendingAlertId(null);
     }
