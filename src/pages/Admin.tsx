@@ -6,10 +6,23 @@ import { TeamMember } from '../types';
 import { getArticles, addArticle, updateArticle, deleteArticle, seedDatabase } from '../lib/db';
 import { Article } from '../types';
 import { CATEGORIES, MOCK_ARTICLES, TEAM_MEMBERS } from '../data';
-import { Trash2, Edit, Plus, LogOut, Database, MoveUp, MoveDown, Users, FileText } from 'lucide-react';
+import { Trash2, Edit, Plus, LogOut, Database, MoveUp, MoveDown, Users, FileText, BellRing, Send } from 'lucide-react';
 import { TeamManager } from '../components/TeamManager';
 import { BlockEditor } from '../components/BlockEditor';
 import { AdminListSkeleton } from '../components/ArticleSkeleton';
+import { getISTDateTime, getYouTubeId } from '../lib/utils';
+
+const getInitialArticleState = (): Partial<Article> => ({
+  title: '',
+  excerpt: '',
+  content: '',
+  blocks: [],
+  category: 'World',
+  author: '',
+  date: new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', month: 'short', day: 'numeric', year: 'numeric' }),
+  readTime: '5 min read',
+  isTrending: false
+});
 
 export const Admin: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -22,12 +35,13 @@ export const Admin: React.FC = () => {
   const [articles, setArticles] = useState<Article[]>([]);
   const [dbTeam, setDbTeam] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
+  const [subscribersCount, setSubscribersCount] = useState<number>(0);
   
   const [editArticleId, setEditArticleId] = useState<string | null>(null);
-  const [newArticle, setNewArticle] = useState<Partial<Article>>({
-    title: '', excerpt: '', content: '', blocks: [], category: 'World', author: '', date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }), readTime: '5 min read', isTrending: false
-  });
+  const [newArticle, setNewArticle] = useState<Partial<Article>>(getInitialArticleState());
   const [translating, setTranslating] = useState(false);
+  const [sendPushAlert, setSendPushAlert] = useState(false);
+  const [sendingAlertId, setSendingAlertId] = useState<string | null>(null);
 
   const allTeam = [...TEAM_MEMBERS];
   dbTeam.forEach(member => {
@@ -36,16 +50,28 @@ export const Admin: React.FC = () => {
     }
   });
 
+  const fetchStats = async () => {
+    try {
+      const res = await fetch('/api/notifications/stats');
+      const data = await res.json();
+      if (typeof data.subscribersCount === 'number') {
+        setSubscribersCount(data.subscribersCount);
+      }
+    } catch (e) {}
+  };
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
         fetchArticles();
         fetchTeam();
+        fetchStats();
       }
     });
     return () => unsubscribe();
   }, []);
+
 
   
   const fetchTeam = async () => {
@@ -89,60 +115,132 @@ export const Admin: React.FC = () => {
     e.preventDefault();
     setTranslating(true);
     try {
+      const trimmedTitle = (newArticle.title || '').trim();
+      const trimmedExcerpt = (newArticle.excerpt || '').trim();
+
       const blocks = (newArticle.blocks || []).map((block) => {
+        const blockContent = block.content || '';
         return {
           ...block,
-          contentEn: block.contentEn || block.content,
-          contentHi: block.contentHi || block.content
+          content: blockContent,
+          contentEn: blockContent,
+          contentHi: blockContent
         };
       });
 
       const firstImageBlock = blocks.find(b => b.type === 'image' && b.content);
-      const imageUrl = firstImageBlock ? firstImageBlock.content : (newArticle.imageUrl || 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&q=80&w=1000');
+      const firstYtBlock = blocks.find(b => b.type === 'youtube' && b.content);
+      const ytId = firstYtBlock?.content ? getYouTubeId(firstYtBlock.content) : null;
+      const ytThumbnail = ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : null;
+      const imageUrl = firstImageBlock ? firstImageBlock.content : (ytThumbnail || newArticle.imageUrl || 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&q=80&w=1000');
       
-      const now = new Date();
-      const istTime = now.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' }) + ' IST';
+      const istTime = getISTDateTime();
       
-      const rawArticle = {
+      const textBlocksContent = blocks
+        .filter(b => b.type === 'text' && b.content)
+        .map(b => b.content)
+        .join('\n');
+      const resolvedContent = textBlocksContent || newArticle.content || '';
+
+      const rawArticle: Record<string, any> = {
         ...newArticle,
+        title: trimmedTitle,
+        titleHi: trimmedTitle,
+        titleEn: trimmedTitle,
+        excerpt: trimmedExcerpt,
+        excerptHi: trimmedExcerpt,
+        excerptEn: trimmedExcerpt,
+        content: resolvedContent,
+        contentHi: resolvedContent,
+        contentEn: resolvedContent,
         blocks: blocks,
         imageUrl,
-        titleEn: newArticle.titleEn || newArticle.title,
-        titleHi: newArticle.titleHi || newArticle.title,
-        excerptEn: newArticle.excerptEn || newArticle.excerpt,
-        excerptHi: newArticle.excerptHi || newArticle.excerpt,
-        contentEn: newArticle.contentEn || newArticle.content || '',
-        contentHi: newArticle.contentHi || newArticle.content || '',
         originalLanguage: newArticle.originalLanguage || 'hi'
       };
       
       if (editArticleId) {
         rawArticle.updatedAt = istTime;
+      } else {
+        if (!rawArticle.date) {
+          rawArticle.date = new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', month: 'short', day: 'numeric', year: 'numeric' });
+        }
       }
 
       const articleToSave = Object.fromEntries(
         Object.entries(rawArticle).filter(([_, v]) => v !== undefined)
       );
 
+      let savedId = editArticleId;
       if (editArticleId) {
         await updateArticle(editArticleId, articleToSave);
         setEditArticleId(null);
       } else {
-        await addArticle(articleToSave as Omit<Article, 'id'>);
+        savedId = await addArticle(articleToSave as Omit<Article, 'id'>);
+      }
+
+
+      // If Push Alert was checked, dispatch breaking news push notification
+      if (sendPushAlert) {
+        try {
+          await fetch('/api/notifications/send-breaking-news', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              title: `🚨 ${articleToSave.title}`,
+              body: articleToSave.excerpt || 'ताज़ा ब्रेकिंग खबर पढ़ें',
+              imageUrl: articleToSave.imageUrl,
+              articleId: savedId || ''
+            })
+          });
+          fetchStats();
+        } catch (pushErr) {
+          console.warn('Push alert dispatch error:', pushErr);
+        }
       }
       
-      setNewArticle({
-        title: '', excerpt: '', content: '', blocks: [], category: 'World', author: '', date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }), readTime: '5 min read', isTrending: false
-      });
-      fetchArticles();
+      setSendPushAlert(false);
+      setNewArticle(getInitialArticleState());
+      await fetchArticles();
 
     } catch (err) {
       console.error(err);
-      alert(`Error adding article: ${err instanceof Error ? err.message : JSON.stringify(err)}`);
+      alert(`Error saving article: ${err instanceof Error ? err.message : JSON.stringify(err)}`);
     } finally {
       setTranslating(false);
     }
   };
+
+  const handleSendPushAlert = async (article: Article) => {
+    if (!window.confirm(`क्या आप "${article.title}" के लिए सभी सब्सक्राइबर्स को ब्रेकिंग न्यूज़ पुश नोटिफिकेशन भेजना चाहते हैं?\n(Send breaking news push alert to all subscribers?)`)) {
+      return;
+    }
+
+    setSendingAlertId(article.id);
+    try {
+      const res = await fetch('/api/notifications/send-breaking-news', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: `🚨 ${article.title}`,
+          body: article.excerpt || 'ताज़ा ब्रेकिंग खबर पढ़ें',
+          imageUrl: article.imageUrl,
+          articleId: article.id
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert(`सफलतापूर्वक भेजा गया! कुल एक्टिव सब्सक्राइबर्स: ${data.totalSubscribers}`);
+        fetchStats();
+      } else {
+        alert(`अलर्ट भेजने में त्रुटि: ${data.error}`);
+      }
+    } catch (err: any) {
+      alert(`अलर्ट भेजने में विफल: ${err.message}`);
+    } finally {
+      setSendingAlertId(null);
+    }
+  };
+
 
   const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this article?')) {
@@ -245,12 +343,19 @@ export const Admin: React.FC = () => {
             <TeamManager />
           ) : (
             <>
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">Manage Articles</h2>
+              <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
+                <div className="flex items-center space-x-3">
+                  <h2 className="text-xl font-semibold text-gray-900">Manage Articles</h2>
+                  <div className="flex items-center space-x-1.5 bg-red-50 text-red-800 px-3 py-1 rounded-full border border-red-200 text-xs font-semibold">
+                    <BellRing size={13} className="text-red-600" />
+                    <span>Push Subscribers: <strong>{subscribersCount}</strong></span>
+                  </div>
+                </div>
                 <button onClick={handleSeed} className="flex items-center text-sm px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">
                   <Database size={16} className="mr-2" /> Seed Database
                 </button>
               </div>
+
 
               <div className="bg-white shadow overflow-hidden sm:rounded-lg mb-8">
                 <div className="px-4 py-5 sm:p-6">
@@ -299,9 +404,26 @@ export const Admin: React.FC = () => {
                       </div>
                     </div>
 
+                    <div className="sm:col-span-2">
+                      <div className="flex items-center h-full pt-6">
+                        <input 
+                          id="pushAlert" 
+                          type="checkbox" 
+                          checked={sendPushAlert} 
+                          onChange={e => setSendPushAlert(e.target.checked)} 
+                          className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded" 
+                        />
+                        <label htmlFor="pushAlert" className="ml-2 block text-sm font-semibold text-red-700 flex items-center gap-1">
+                          <BellRing size={15} />
+                          <span>Push Breaking Alert</span>
+                        </label>
+                      </div>
+                    </div>
+
                     <div className="sm:col-span-6 flex justify-end">
+
                       {editArticleId && (
-                        <button type="button" onClick={() => { setEditArticleId(null); setNewArticle({ title: '', excerpt: '', content: '', blocks: [], category: 'World', author: '', date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }), readTime: '5 min read', isTrending: false }); }} className="mr-4 inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        <button type="button" onClick={() => { setEditArticleId(null); setNewArticle(getInitialArticleState()); }} className="mr-4 inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
                           Cancel
                         </button>
                       )}
@@ -332,13 +454,26 @@ export const Admin: React.FC = () => {
                                 </p>
                               </div>
                               <div className="mt-2 flex">
-                                <div className="flex items-center text-sm text-gray-500">
-                                  <span className="truncate">{article.date} • By {article.author}</span>
+                                <div className="flex items-center text-sm text-gray-500 gap-2">
+                                  <span>{article.date} • By {article.author}</span>
+                                  {article.updatedAt && (
+                                    <span className="text-xs bg-amber-50 text-amber-800 px-2 py-0.5 rounded border border-amber-200 font-medium">
+                                      Updated: {article.updatedAt}
+                                    </span>
+                                  )}
                                 </div>
                               </div>
                             </div>
                           </div>
-                          <div className="ml-5 flex-shrink-0 flex space-x-2">
+                          <div className="ml-5 flex-shrink-0 flex items-center space-x-2">
+                            <button 
+                              onClick={() => handleSendPushAlert(article)}
+                              disabled={sendingAlertId === article.id}
+                              title="Send Breaking News Push Notification"
+                              className="p-2 text-amber-600 hover:text-amber-900 hover:bg-amber-50 rounded-full transition-colors disabled:opacity-50 cursor-pointer"
+                            >
+                              <BellRing size={20} className={sendingAlertId === article.id ? 'animate-bounce text-red-600' : ''} />
+                            </button>
                             <button onClick={() => {
                               setEditArticleId(article.id);
                               setNewArticle(article);
@@ -350,6 +485,7 @@ export const Admin: React.FC = () => {
                               <Trash2 size={20} />
                             </button>
                           </div>
+
                         </div>
                       </li>
                     ))}

@@ -16,12 +16,17 @@ import { Disclaimer } from './pages/about/Disclaimer';
 import { Grievance } from './pages/about/Grievance';
 import { Advertise } from './pages/about/Advertise';
 import { LanguageProvider } from './lib/LanguageContext';
+import { ForegroundAlertToast } from './components/ForegroundAlertToast';
+import { BreakingNewsBanner } from './components/BreakingNewsBanner';
 
 export default function App() {
   return (
     <LanguageProvider>
       <BrowserRouter>
+        <ForegroundAlertToast />
+        <BreakingNewsBanner />
         <Routes>
+
           <Route path="/" element={<Home />} />
           <Route path="/article/:id" element={<ArticlePage />} />
           <Route path="/admin" element={<Admin />} />

@@ -19,6 +19,21 @@
           ]
         }
       ]
+    },
+    {
+      "name": "team",
+      "description": "Stores editorial and reporter team members",
+      "rules": "Anyone can read team members. Only authenticated users can manage team members."
+    },
+    {
+      "name": "subscribers",
+      "description": "Stores Firebase Cloud Messaging push notification subscribers for breaking news",
+      "rules": "Anyone can subscribe or unsubscribe their device token. Only authenticated users can list all subscribers."
+    },
+    {
+      "name": "breaking_alerts",
+      "description": "Stores dispatched breaking news push notifications for live client synchronization",
+      "rules": "Anyone can read recent breaking news alerts. Only authenticated users can send alerts."
     }
   ]
 }

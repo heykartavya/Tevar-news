@@ -1,21 +1,36 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Menu, User, Bell, X, Globe } from 'lucide-react';
+import { Search, Menu, User, Bell, X, Globe, BellRing } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { Category, SiteLanguage } from '../types';
+import { Category, SiteLanguage, Article } from '../types';
 import { CATEGORIES } from '../data';
 import { useLanguage } from '../lib/LanguageContext';
+import { NotificationBellModal } from './NotificationBellModal';
+import { isLocalSubscribed } from '../lib/notifications';
 
 interface HeaderProps {
   activeCategory?: string;
   onCategoryChange?: (category: Category) => void;
   searchQuery?: string;
   onSearchChange?: (query: string) => void;
+  recentBreakingArticles?: Article[];
 }
 
-export const Header: React.FC<HeaderProps> = ({ activeCategory, onCategoryChange, searchQuery, onSearchChange }) => {
+export const Header: React.FC<HeaderProps> = ({ 
+  activeCategory, 
+  onCategoryChange, 
+  searchQuery, 
+  onSearchChange,
+  recentBreakingArticles
+}) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [bellModalOpen, setBellModalOpen] = useState(false);
+  const [isSubscribed, setIsSubscribed] = useState(false);
   const { language, setLanguage, t } = useLanguage();
+
+  useEffect(() => {
+    setIsSubscribed(isLocalSubscribed());
+  }, [bellModalOpen]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -33,7 +48,13 @@ export const Header: React.FC<HeaderProps> = ({ activeCategory, onCategoryChange
         <div className="flex items-center space-x-6">
           <a href="#" className="hover:text-black transition-colors">Newsletters</a>
           <a href="#" className="hover:text-black transition-colors">Podcasts</a>
-          <a href="#" className="hover:text-black transition-colors text-red-600 font-semibold">Subscribe</a>
+          <button 
+            onClick={() => setBellModalOpen(true)}
+            className="hover:text-black transition-colors text-red-600 font-semibold cursor-pointer flex items-center gap-1.5"
+          >
+            <BellRing size={13} className="text-red-600 animate-pulse" />
+            <span>{language === 'en' ? 'Breaking Alerts' : 'ब्रेकिंग अलर्ट्स'}</span>
+          </button>
           <div className="flex items-center space-x-2 border-l border-gray-300 pl-4">
             <Globe size={14} />
             <select 
@@ -83,8 +104,19 @@ export const Header: React.FC<HeaderProps> = ({ activeCategory, onCategoryChange
 
           {/* Right Actions */}
           <div className="flex justify-end items-center space-x-2 sm:space-x-4 flex-1 md:flex-none md:w-1/3">
-            <button className="text-gray-700 hover:text-black hidden sm:block">
+            {/* Breaking News Push Bell Button */}
+            <button 
+              onClick={() => setBellModalOpen(true)}
+              className="relative p-2 text-gray-700 hover:text-red-700 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
+              title={language === 'en' ? 'Breaking News Alerts' : 'ब्रेकिंग न्यूज़ अलर्ट्स'}
+              aria-label="Breaking News Alerts"
+            >
               <Bell size={20} />
+              {isSubscribed ? (
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-green-500 rounded-full ring-2 ring-white" />
+              ) : (
+                <span className="absolute top-1 right-1 w-2 h-2 bg-red-600 rounded-full ring-2 ring-white animate-ping" />
+              )}
             </button>
             <div className="h-6 w-px bg-gray-200 hidden sm:block"></div>
             <button className="flex items-center space-x-2 text-gray-700 hover:text-black">
@@ -106,6 +138,7 @@ export const Header: React.FC<HeaderProps> = ({ activeCategory, onCategoryChange
           </div>
         </div>
       </div>
+
 
       {/* Navigation Categories */}
       {onCategoryChange && (
@@ -174,10 +207,32 @@ export const Header: React.FC<HeaderProps> = ({ activeCategory, onCategoryChange
                   </li>
                 ))}
               </ul>
+
+              {/* Mobile Push Notification Subscribe Action */}
+              <div className="p-4 border-t border-gray-100">
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setBellModalOpen(true);
+                  }}
+                  className="w-full flex items-center justify-center space-x-2 py-2.5 px-4 bg-red-700 text-white rounded-xl text-sm font-semibold shadow-sm cursor-pointer"
+                >
+                  <BellRing size={16} />
+                  <span>{language === 'en' ? 'Breaking News Alerts' : 'ब्रेकिंग न्यूज़ अलर्ट्स'}</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
+
+      {/* Notification Bell Modal */}
+      <NotificationBellModal 
+        isOpen={bellModalOpen}
+        onClose={() => setBellModalOpen(false)}
+        recentBreakingArticles={recentBreakingArticles}
+      />
     </header>
   );
 };
+

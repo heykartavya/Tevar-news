@@ -1,7 +1,7 @@
 export interface PostBlock {
   id: string;
-  type: 'text' | 'image' | 'youtube';
-  content?: string; // HTML for text, URL for image/youtube
+  type: 'text' | 'image' | 'youtube' | 'facebook' | 'instagram';
+  content?: string; // HTML for text, URL for image/youtube/facebook/instagram
   contentEn?: string;
   contentHi?: string;
 }

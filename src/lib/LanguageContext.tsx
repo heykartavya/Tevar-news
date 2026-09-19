@@ -246,29 +246,21 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const l = (article: Article, field: 'title' | 'excerpt' | 'content'): string => {
-    // English mode: English text
-    // Hinglish mode: Hindi text
-    // Hindi mode: Hindi text
-    
-    // For older articles that don't have titleEn/titleHi, fallback to 'title'
-    const isHindiMode = language === 'hi' || language === 'hinglish';
+    const isEnglish = language === 'en';
     
     if (field === 'title') {
-      if (isHindiMode && article.titleHi) return article.titleHi;
-      if (!isHindiMode && article.titleEn) return article.titleEn;
-      return article.title; // fallback
+      if (isEnglish && article.titleEn && article.titleEn !== article.title) return article.titleEn;
+      return article.title || article.titleHi || '';
     }
     
     if (field === 'excerpt') {
-      if (isHindiMode && article.excerptHi) return article.excerptHi;
-      if (!isHindiMode && article.excerptEn) return article.excerptEn;
-      return article.excerpt; // fallback
+      if (isEnglish && article.excerptEn && article.excerptEn !== article.excerpt) return article.excerptEn;
+      return article.excerpt || article.excerptHi || '';
     }
     
     if (field === 'content') {
-      if (isHindiMode && article.contentHi) return article.contentHi;
-      if (!isHindiMode && article.contentEn) return article.contentEn;
-      return article.content || ''; // fallback
+      if (isEnglish && article.contentEn && article.contentEn !== article.content) return article.contentEn;
+      return article.content || article.contentHi || '';
     }
 
     return '';

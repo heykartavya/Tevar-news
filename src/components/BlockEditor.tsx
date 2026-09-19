@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { PostBlock } from '../types';
-import { ArrowUp, ArrowDown, Trash2, Image as ImageIcon, Type, Video, Plus } from 'lucide-react';
+import { ArrowUp, ArrowDown, Trash2, Image as ImageIcon, Type, Video, Plus, Facebook, Instagram, Youtube } from 'lucide-react';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import { ImageUploader } from './ImageUploader';
+import { getYouTubeEmbedUrl, getFacebookEmbedUrl, isFacebookReel, getInstagramEmbedUrl } from '../lib/utils';
 
 interface BlockEditorProps {
   blocks: PostBlock[];
@@ -39,15 +40,21 @@ export const BlockEditor: React.FC<BlockEditorProps> = ({ blocks, onChange }) =>
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-2 mb-4 bg-gray-50 p-2 rounded-lg border border-gray-200">
-        <button type="button" onClick={() => addBlock('text')} className="flex items-center gap-1 px-3 py-2 bg-white text-gray-700 text-sm font-medium rounded border border-gray-300 hover:bg-gray-100 transition-colors">
-          <Type size={16} /> Add Text
+      <div className="flex flex-wrap gap-2 mb-4 bg-gray-50 p-2.5 rounded-lg border border-gray-200">
+        <button type="button" onClick={() => addBlock('text')} className="flex items-center gap-1.5 px-3 py-2 bg-white text-gray-700 text-sm font-medium rounded border border-gray-300 hover:bg-gray-100 transition-colors shadow-xs">
+          <Type size={16} className="text-gray-600" /> Add Text
         </button>
-        <button type="button" onClick={() => addBlock('image')} className="flex items-center gap-1 px-3 py-2 bg-white text-gray-700 text-sm font-medium rounded border border-gray-300 hover:bg-gray-100 transition-colors">
-          <ImageIcon size={16} /> Add Image
+        <button type="button" onClick={() => addBlock('image')} className="flex items-center gap-1.5 px-3 py-2 bg-white text-gray-700 text-sm font-medium rounded border border-gray-300 hover:bg-gray-100 transition-colors shadow-xs">
+          <ImageIcon size={16} className="text-emerald-600" /> Add Image
         </button>
-        <button type="button" onClick={() => addBlock('youtube')} className="flex items-center gap-1 px-3 py-2 bg-white text-gray-700 text-sm font-medium rounded border border-gray-300 hover:bg-gray-100 transition-colors">
-          <Video size={16} /> Add YouTube
+        <button type="button" onClick={() => addBlock('youtube')} className="flex items-center gap-1.5 px-3 py-2 bg-white text-gray-700 text-sm font-medium rounded border border-gray-300 hover:bg-red-50 transition-colors shadow-xs">
+          <Youtube size={16} className="text-red-600" /> Add YouTube
+        </button>
+        <button type="button" onClick={() => addBlock('facebook')} className="flex items-center gap-1.5 px-3 py-2 bg-white text-gray-700 text-sm font-medium rounded border border-gray-300 hover:bg-blue-50 transition-colors shadow-xs">
+          <Facebook size={16} className="text-blue-600" /> Add Facebook Video / Reel
+        </button>
+        <button type="button" onClick={() => addBlock('instagram')} className="flex items-center gap-1.5 px-3 py-2 bg-white text-gray-700 text-sm font-medium rounded border border-gray-300 hover:bg-pink-50 transition-colors shadow-xs">
+          <Instagram size={16} className="text-pink-600" /> Add Instagram Video / Reel
         </button>
       </div>
 
@@ -95,29 +102,117 @@ export const BlockEditor: React.FC<BlockEditorProps> = ({ blocks, onChange }) =>
 
               {block.type === 'youtube' && (
                 <div>
-                  <label className="block text-xs font-semibold text-gray-500 uppercase mb-2">YouTube Video</label>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-xs font-semibold text-gray-700 uppercase flex items-center gap-1.5">
+                      <Youtube size={14} className="text-red-600" /> YouTube Video / Shorts
+                    </label>
+                  </div>
                   <input 
                     type="url" 
-                    placeholder="https://www.youtube.com/watch?v=..."
+                    placeholder="https://www.youtube.com/watch?v=... or https://youtu.be/..."
                     value={block.content || ''}
                     onChange={(e) => updateBlock(block.id, e.target.value)}
                     className="w-full border border-gray-300 rounded-md py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
                   />
-                  {block.content && block.content.includes('youtube.com/watch?v=') && (
-                    <div className="mt-4 aspect-video rounded-md overflow-hidden bg-gray-100">
+                  {block.content && getYouTubeEmbedUrl(block.content) && (
+                    <div className="mt-4 aspect-video rounded-md overflow-hidden bg-black shadow-sm">
                       <iframe 
                         width="100%" 
                         height="100%" 
-                        src={`https://www.youtube.com/embed/${new URL(block.content).searchParams.get('v')}`} 
+                        src={getYouTubeEmbedUrl(block.content)!} 
                         title="YouTube video player" 
                         frameBorder="0" 
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                         allowFullScreen
-                      ></iframe>
+                      />
                     </div>
                   )}
                 </div>
               )}
+
+              {block.type === 'facebook' && (() => {
+                const fbEmbedUrl = block.content ? getFacebookEmbedUrl(block.content) : null;
+                const isReel = block.content ? isFacebookReel(block.content) : false;
+                return (
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-xs font-semibold text-gray-700 uppercase flex items-center gap-1.5">
+                        <Facebook size={14} className="text-blue-600" /> Facebook Video / Reel Link
+                      </label>
+                      <span className="text-[11px] text-gray-500">Supports facebook.com/reel, watch, and video links</span>
+                    </div>
+                    <input 
+                      type="url" 
+                      placeholder="https://www.facebook.com/reel/... or https://www.facebook.com/watch/?v=..."
+                      value={block.content || ''}
+                      onChange={(e) => updateBlock(block.id, e.target.value)}
+                      className="w-full border border-gray-300 rounded-md py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {fbEmbedUrl ? (
+                      <div className="mt-4 flex flex-col items-center p-3 bg-gray-50 rounded-lg border border-gray-200">
+                        <div className="text-xs text-gray-500 mb-2 font-medium">Facebook Player Preview:</div>
+                        <div className={`overflow-hidden rounded-lg shadow-sm bg-black ${isReel ? 'w-[340px] max-w-full h-[540px]' : 'w-full aspect-video'}`}>
+                          <iframe 
+                            src={fbEmbedUrl}
+                            className="w-full h-full border-0"
+                            style={{ border: 'none', overflow: 'hidden' }} 
+                            scrolling="no" 
+                            frameBorder="0" 
+                            allowFullScreen={true} 
+                            allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+                            title="Facebook video player preview"
+                          />
+                        </div>
+                      </div>
+                    ) : block.content ? (
+                      <p className="text-xs text-amber-600 mt-2">
+                        Please enter a valid public Facebook video or reel URL (e.g., https://www.facebook.com/reel/123456789)
+                      </p>
+                    ) : null}
+                  </div>
+                );
+              })()}
+
+              {block.type === 'instagram' && (() => {
+                const igEmbedUrl = block.content ? getInstagramEmbedUrl(block.content) : null;
+                return (
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-xs font-semibold text-gray-700 uppercase flex items-center gap-1.5">
+                        <Instagram size={14} className="text-pink-600" /> Instagram Reel / Video Link
+                      </label>
+                      <span className="text-[11px] text-gray-500">Supports instagram.com/reel and instagram.com/p links</span>
+                    </div>
+                    <input 
+                      type="url" 
+                      placeholder="https://www.instagram.com/reel/... or https://www.instagram.com/p/..."
+                      value={block.content || ''}
+                      onChange={(e) => updateBlock(block.id, e.target.value)}
+                      className="w-full border border-gray-300 rounded-md py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
+                    />
+                    {igEmbedUrl ? (
+                      <div className="mt-4 flex flex-col items-center p-3 bg-gray-50 rounded-lg border border-gray-200">
+                        <div className="text-xs text-gray-500 mb-2 font-medium">Instagram Player Preview:</div>
+                        <div className="w-[360px] max-w-full h-[540px] overflow-hidden rounded-lg shadow-sm border border-gray-200 bg-white">
+                          <iframe 
+                            src={igEmbedUrl}
+                            className="w-full h-full border-0"
+                            frameBorder="0" 
+                            scrolling="no" 
+                            allowTransparency={true}
+                            allow="autoplay; clipboard-write; encrypted-media; picture-in-picture"
+                            title="Instagram player preview"
+                          />
+                        </div>
+                      </div>
+                    ) : block.content ? (
+                      <p className="text-xs text-amber-600 mt-2">
+                        Please enter a valid Instagram reel or post URL (e.g., https://www.instagram.com/reel/C8qX-zsvPqQ/)
+                      </p>
+                    ) : null}
+                  </div>
+                );
+              })()}
             </div>
           </div>
         ))}

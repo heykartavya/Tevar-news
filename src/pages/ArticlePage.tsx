@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { getArticleImage } from '../lib/utils';
+import { getArticleImage, getYouTubeEmbedUrl, getFacebookEmbedUrl, isFacebookReel, getInstagramEmbedUrl } from '../lib/utils';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getArticleById, getRelatedArticles } from '../lib/db';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 import { MOCK_ARTICLES, TEAM_MEMBERS } from '../data';
 import { Article } from '../types';
 import { Header } from '../components/Header';
@@ -23,42 +25,44 @@ export const ArticlePage: React.FC = () => {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    const fetchArticle = async () => {
-      if (!id) return;
-      setLoading(true);
-      
-      let currentArticle = null;
-      try {
-        const fetched = await getArticleById(id);
-        if (fetched) {
-          currentArticle = fetched;
-        } else {
-          currentArticle = MOCK_ARTICLES.find(a => a.id === id) || null;
-        }
-      } catch (err) {
-        console.error("Error fetching article:", err);
-        currentArticle = MOCK_ARTICLES.find(a => a.id === id) || null;
-      } 
-      
-      setArticle(currentArticle);
-      
-      if (currentArticle) {
-        try {
-          const related = await getRelatedArticles(currentArticle.category, id);
-          if (related.length > 0) {
-            setRelatedArticles(related);
-          } else {
+    if (!id) return;
+    setLoading(true);
+
+    const docRef = doc(db, 'articles', id);
+    const unsubscribe = onSnapshot(docRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const currentArticle = { id: docSnap.id, ...docSnap.data() } as Article;
+        setArticle(currentArticle);
+        
+        getRelatedArticles(currentArticle.category, id)
+          .then((related) => {
+            if (related.length > 0) {
+              setRelatedArticles(related);
+            } else {
+              setRelatedArticles(MOCK_ARTICLES.filter(a => a.category === currentArticle?.category && a.id !== id).slice(0, 3));
+            }
+          })
+          .catch((err) => {
+            console.error("Error fetching related articles:", err);
             setRelatedArticles(MOCK_ARTICLES.filter(a => a.category === currentArticle?.category && a.id !== id).slice(0, 3));
-          }
-        } catch (err) {
-          console.error("Error fetching related articles:", err);
-          setRelatedArticles(MOCK_ARTICLES.filter(a => a.category === currentArticle?.category && a.id !== id).slice(0, 3));
-        }
+          });
+      } else {
+        const mock = MOCK_ARTICLES.find(a => a.id === id) || null;
+        setArticle(mock);
       }
-      
       setLoading(false);
-    };
-    fetchArticle();
+    }, (err) => {
+      console.error("Error listening to article:", err);
+      getArticleById(id).then((fetched) => {
+        setArticle(fetched || MOCK_ARTICLES.find(a => a.id === id) || null);
+        setLoading(false);
+      }).catch(() => {
+        setArticle(MOCK_ARTICLES.find(a => a.id === id) || null);
+        setLoading(false);
+      });
+    });
+
+    return () => unsubscribe();
   }, [id]);
 
   useEffect(() => {
@@ -187,8 +191,16 @@ export const ArticlePage: React.FC = () => {
                           {displayDesignation}
                         </div>
                       )}
-                      <div className="font-sans text-gray-500 text-xs mt-1">
-                        {article.date} &bull; {article.updatedAt ? `Updated: ${article.updatedAt}` : `Updated: ${article.date}, 12:00 PM IST`}
+                      <div className="font-sans text-gray-500 text-xs mt-1 flex flex-wrap items-center gap-1.5">
+                        <span>{language === 'hi' ? 'प्रकाशित:' : 'Published:'} {article.date}</span>
+                        {article.updatedAt && (
+                          <>
+                            <span className="text-gray-300">•</span>
+                            <span className="text-red-700 font-medium">
+                              {language === 'hi' ? 'अपडेटेड:' : 'Updated:'} {article.updatedAt}
+                            </span>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -226,11 +238,14 @@ export const ArticlePage: React.FC = () => {
               <div className="space-y-5 md:space-y-6 font-serif text-[17px] md:text-[18px] leading-relaxed text-gray-900 text-left [&>p:first-of-type::first-letter]:text-[4.5rem] [&>p:first-of-type::first-letter]:font-serif [&>p:first-of-type::first-letter]:font-black [&>p:first-of-type::first-letter]:float-left [&>p:first-of-type::first-letter]:mr-3 [&>p:first-of-type::first-letter]:leading-[0.8] [&>p:first-of-type::first-letter]:text-black">
                 {article.blocks.map((block, idx) => {
                   if (block.type === 'text') {
+                    const blockContent = (language === 'en' && block.contentEn && block.contentEn !== block.content)
+                      ? block.contentEn
+                      : (block.content || block.contentHi || '');
                     return (
                       <div 
                         key={idx} 
                         className="text-gray-800 text-left [&>p]:mb-4 [&>h2]:text-2xl [&>h2]:font-bold [&>h2]:mt-8 [&>h2]:mb-4 max-w-full"
-                        dangerouslySetInnerHTML={{ __html: l(block, 'content').replace(/&nbsp;/g, ' ') }}
+                        dangerouslySetInnerHTML={{ __html: blockContent.replace(/&nbsp;/g, ' ') }}
                       />
                     );
                   }
@@ -246,20 +261,61 @@ export const ArticlePage: React.FC = () => {
                       </figure>
                     );
                   }
-                  if (block.type === 'youtube') {
-                    const videoIdMatch = block.content.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
-                    const videoId = videoIdMatch ? videoIdMatch[1] : null;
-                    if (videoId) {
+                  if (block.type === 'youtube' && block.content) {
+                    const ytUrl = getYouTubeEmbedUrl(block.content);
+                    if (ytUrl) {
                       return (
-                        <div key={idx} className="my-10 aspect-video w-full rounded-sm overflow-hidden bg-gray-100">
+                        <div key={idx} className="my-10 aspect-video w-full rounded-sm overflow-hidden bg-black shadow-md">
                           <iframe
-                            className="w-full h-full"
-                            src={`https://www.youtube.com/embed/${videoId}`}
+                            className="w-full h-full border-0"
+                            src={ytUrl}
                             title="YouTube video player"
                             frameBorder="0"
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                             allowFullScreen
-                          ></iframe>
+                          />
+                        </div>
+                      );
+                    }
+                  }
+                  if (block.type === 'facebook' && block.content) {
+                    const fbUrl = getFacebookEmbedUrl(block.content);
+                    const isReel = isFacebookReel(block.content);
+                    if (fbUrl) {
+                      return (
+                        <div key={idx} className="my-10 flex justify-center w-full">
+                          <div className={`overflow-hidden rounded-xl shadow-md border border-gray-200 bg-black ${isReel ? 'w-[360px] max-w-full h-[580px] sm:h-[620px]' : 'w-full aspect-video'}`}>
+                            <iframe
+                              src={fbUrl}
+                              className="w-full h-full border-0"
+                              style={{ border: 'none', overflow: 'hidden' }}
+                              scrolling="no"
+                              frameBorder="0"
+                              allowFullScreen={true}
+                              allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+                              title="Facebook video player"
+                            />
+                          </div>
+                        </div>
+                      );
+                    }
+                  }
+                  if (block.type === 'instagram' && block.content) {
+                    const igUrl = getInstagramEmbedUrl(block.content);
+                    if (igUrl) {
+                      return (
+                        <div key={idx} className="my-10 flex justify-center w-full">
+                          <div className="w-[400px] max-w-full h-[580px] sm:h-[620px] rounded-xl overflow-hidden shadow-md border border-gray-200 bg-white">
+                            <iframe
+                              src={igUrl}
+                              className="w-full h-full border-0"
+                              frameBorder="0"
+                              scrolling="no"
+                              allowTransparency={true}
+                              allow="autoplay; clipboard-write; encrypted-media; picture-in-picture"
+                              title="Instagram video player"
+                            />
+                          </div>
                         </div>
                       );
                     }

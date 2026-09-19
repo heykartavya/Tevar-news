@@ -1,21 +1,46 @@
-import { initializeApp } from 'firebase/app';
+import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
+import { getMessaging, isSupported, Messaging } from 'firebase/messaging';
+import appletConfig from '../../firebase-applet-config.json';
 
 const isCustomFirebase = !!import.meta.env.VITE_FIREBASE_API_KEY;
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyBheQS3a1f3PKoVSEH2TqO40Jzv1n_P_hI",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "gen-lang-client-0445592793.firebaseapp.com",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "gen-lang-client-0445592793",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "gen-lang-client-0445592793.firebasestorage.app",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "535716392751",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:535716392751:web:091ee9aa5d9e70070fbbda",
-  measurementId: ""
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || appletConfig.apiKey,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || appletConfig.authDomain,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || appletConfig.projectId,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || appletConfig.storageBucket,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || appletConfig.messagingSenderId,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || appletConfig.appId,
+  measurementId: appletConfig.measurementId || ""
 };
 
-const app = initializeApp(firebaseConfig);
+export const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 
-const dbId = import.meta.env.VITE_FIREBASE_DATABASE_ID || (isCustomFirebase ? undefined : "ai-studio-tevarnews-8a28c4b5-2980-4382-84ec-61e7f72ad2dd");
-export const db = dbId ? getFirestore(app, dbId) : getFirestore(app);
+const dbId = import.meta.env.VITE_FIREBASE_DATABASE_ID || (isCustomFirebase ? undefined : appletConfig.firestoreDatabaseId);
+export const db = (dbId && dbId !== '(default)') ? getFirestore(app, dbId) : getFirestore(app);
 export const auth = getAuth(app);
+
+let messagingPromise: Promise<Messaging | null> | null = null;
+
+export const getFCM = async (): Promise<Messaging | null> => {
+  if (typeof window === 'undefined') return null;
+  if (!('Notification' in window) || !('serviceWorker' in navigator)) return null;
+
+  if (!messagingPromise) {
+    messagingPromise = isSupported()
+      .then((supported) => {
+        if (supported) {
+          return getMessaging(app);
+        }
+        return null;
+      })
+      .catch((err) => {
+        console.warn('Firebase Messaging is not supported in this environment:', err);
+        return null;
+      });
+  }
+  return messagingPromise;
+};
+

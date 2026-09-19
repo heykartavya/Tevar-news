@@ -3,7 +3,7 @@ import { Article } from '../types';
 import { X } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { useLanguage } from '../lib/LanguageContext';
-import { getArticleImage } from '../lib/utils';
+import { getArticleImage, getYouTubeEmbedUrl, getFacebookEmbedUrl, isFacebookReel, getInstagramEmbedUrl } from '../lib/utils';
 
 interface ArticleModalProps {
   article: Article;
@@ -93,17 +93,48 @@ export const ArticleModal: React.FC<ArticleModalProps> = ({ article, onClose }) 
                       <img src={block.content} alt="" className="w-full h-auto rounded" />
                     </figure>
                   )}
-                  {block.type === 'youtube' && block.content && block.content.includes('youtube.com/watch?v=') && (
-                    <div className="mt-4 aspect-video rounded-md overflow-hidden bg-gray-100 my-8">
+                  {block.type === 'youtube' && block.content && getYouTubeEmbedUrl(block.content) && (
+                    <div className="mt-4 aspect-video rounded-md overflow-hidden bg-black my-8 shadow-sm">
                       <iframe 
                         width="100%" 
                         height="100%" 
-                        src={`https://www.youtube.com/embed/${new URL(block.content).searchParams.get('v')}`} 
+                        src={getYouTubeEmbedUrl(block.content)!} 
                         title="YouTube video player" 
                         frameBorder="0" 
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                         allowFullScreen
-                      ></iframe>
+                      />
+                    </div>
+                  )}
+                  {block.type === 'facebook' && block.content && getFacebookEmbedUrl(block.content) && (
+                    <div className="my-8 flex justify-center w-full">
+                      <div className={`overflow-hidden rounded-xl shadow-md border border-gray-200 bg-black ${isFacebookReel(block.content) ? 'w-[340px] max-w-full h-[540px]' : 'w-full aspect-video'}`}>
+                        <iframe 
+                          src={getFacebookEmbedUrl(block.content)!} 
+                          className="w-full h-full border-0" 
+                          style={{ border: 'none', overflow: 'hidden' }} 
+                          scrolling="no" 
+                          frameBorder="0" 
+                          allowFullScreen={true} 
+                          allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share" 
+                          title="Facebook video player"
+                        />
+                      </div>
+                    </div>
+                  )}
+                  {block.type === 'instagram' && block.content && getInstagramEmbedUrl(block.content) && (
+                    <div className="my-8 flex justify-center w-full">
+                      <div className="w-[380px] max-w-full h-[560px] overflow-hidden rounded-xl shadow-md border border-gray-200 bg-white">
+                        <iframe 
+                          src={getInstagramEmbedUrl(block.content)!} 
+                          className="w-full h-full border-0" 
+                          frameBorder="0" 
+                          scrolling="no" 
+                          allowTransparency={true} 
+                          allow="autoplay; clipboard-write; encrypted-media; picture-in-picture" 
+                          title="Instagram video player"
+                        />
+                      </div>
                     </div>
                   )}
                 </div>

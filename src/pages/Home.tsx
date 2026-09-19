@@ -8,9 +8,10 @@ import { HeroSkeleton, GridSkeleton, CompactSkeleton, TrendingSkeleton, VideoGri
 import { Category, Article } from '../types';
 import { MOCK_ARTICLES } from '../data';
 import { getArticleImage } from '../lib/utils';
-import { TrendingUp } from 'lucide-react';
+import { TrendingUp, BellRing } from 'lucide-react';
 import { getArticles } from '../lib/db';
 import { useLanguage } from '../lib/LanguageContext';
+import { NotificationBellModal } from '../components/NotificationBellModal';
 
 export const Home: React.FC = () => {
   const navigate = useNavigate();
@@ -18,6 +19,8 @@ export const Home: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tickerBellOpen, setTickerBellOpen] = useState(false);
+
   const { language, t, l } = useLanguage();
 
   useEffect(() => {
@@ -68,6 +71,14 @@ export const Home: React.FC = () => {
 
   const editorPicks = displayedArticles.filter(a => !usedIds.has(a.id)).slice(0, 3);
 
+  // Filter Breaking News articles from last 3 days
+  const threeDaysAgo = new Date();
+  threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+  const recentArticles = articles.filter(a => {
+    const d = new Date(a.date);
+    return !isNaN(d.getTime()) && d >= threeDaysAgo;
+  });
+
   return (
     <div className="min-h-screen bg-white flex flex-col font-sans">
       <Header 
@@ -75,53 +86,55 @@ export const Home: React.FC = () => {
         onCategoryChange={setActiveCategory} 
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
+        recentBreakingArticles={recentArticles}
       />
       
       <main className="flex-1 flex flex-col">
         
         {/* Breaking News Ticker */}
-        {!loading && articles.length > 0 && (() => {
-          const threeDaysAgo = new Date();
-          threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
-          const recentArticles = articles.filter(a => {
-            const d = new Date(a.date);
-            return d >= threeDaysAgo;
-          });
-          
-          if (recentArticles.length === 0) return null;
-
-          return (
-            <div className="w-full bg-red-700 text-white flex items-center h-10 overflow-hidden relative z-10">
-              <div className="bg-red-800 h-full flex items-center px-4 md:px-6 font-sans font-bold text-xs md:text-sm uppercase tracking-wider whitespace-nowrap shadow-md z-20 shrink-0">
-                {language === 'en' ? 'Breaking News' : 'ब्रेकिंग न्यूज़'}
-              </div>
-              <div className="flex-1 overflow-hidden relative h-full flex items-center group">
-                <div className="flex w-max animate-marquee font-sans text-sm tracking-wide group-hover:[animation-play-state:paused]">
-                  <div className="flex shrink-0 items-center pr-8">
-                    {recentArticles.map((a, idx) => (
-                      <span key={idx} className="inline-flex items-center cursor-pointer hover:underline" onClick={() => navigate(`/article/${a.id}`)}>
-                        {l(a, 'title')}
-                        <span className="mx-4 text-red-300">•</span>
-                      </span>
-                    ))}
-                  </div>
-                  <div className="flex shrink-0 items-center pr-8" aria-hidden="true">
-                    {recentArticles.map((a, idx) => (
-                      <span key={`dup-${idx}`} className="inline-flex items-center cursor-pointer hover:underline" onClick={() => navigate(`/article/${a.id}`)}>
-                        {l(a, 'title')}
-                        <span className="mx-4 text-red-300">•</span>
-                      </span>
-                    ))}
-                  </div>
+        {!loading && recentArticles.length > 0 && (
+          <div className="w-full bg-red-700 text-white flex items-center h-10 overflow-hidden relative z-10">
+            <div className="bg-red-800 h-full flex items-center px-4 md:px-6 font-sans font-bold text-xs md:text-sm uppercase tracking-wider whitespace-nowrap shadow-md z-20 shrink-0">
+              {language === 'en' ? 'Breaking News' : 'ब्रेकिंग न्यूज़'}
+            </div>
+            <div className="flex-1 overflow-hidden relative h-full flex items-center group">
+              <div className="flex w-max animate-marquee font-sans text-sm tracking-wide group-hover:[animation-play-state:paused]">
+                <div className="flex shrink-0 items-center pr-8">
+                  {recentArticles.map((a, idx) => (
+                    <span key={idx} className="inline-flex items-center cursor-pointer hover:underline" onClick={() => navigate(`/article/${a.id}`)}>
+                      {l(a, 'title')}
+                      <span className="mx-4 text-red-300">•</span>
+                    </span>
+                  ))}
+                </div>
+                <div className="flex shrink-0 items-center pr-8" aria-hidden="true">
+                  {recentArticles.map((a, idx) => (
+                    <span key={`dup-${idx}`} className="inline-flex items-center cursor-pointer hover:underline" onClick={() => navigate(`/article/${a.id}`)}>
+                      {l(a, 'title')}
+                      <span className="mx-4 text-red-300">•</span>
+                    </span>
+                  ))}
                 </div>
               </div>
             </div>
-          );
-        })()}
-{/* Top Ad Space */}
-        <div className="w-full bg-gray-50 py-4 border-b border-gray-100">
-          <AdSpace format="leaderboard" />
-        </div>
+            {/* Ticker Subscribe CTA */}
+            <button
+              onClick={() => setTickerBellOpen(true)}
+              className="bg-red-950 hover:bg-black text-white text-xs font-bold px-3 h-full flex items-center space-x-1.5 shrink-0 cursor-pointer transition-colors z-20 shadow-md"
+              title={language === 'en' ? 'Get Breaking News Alerts' : 'ब्रेकिंग अलर्ट्स प्राप्त करें'}
+            >
+              <BellRing size={13} className="text-yellow-300 animate-bounce" />
+              <span className="hidden sm:inline">{language === 'en' ? 'Alerts' : 'अलर्ट्स'}</span>
+            </button>
+          </div>
+        )}
+
+{/* Top Ad Space - Only render when content is loaded */}
+        {!loading && articles.length > 0 && (
+          <div className="w-full bg-gray-50 py-4 border-b border-gray-100">
+            <AdSpace format="leaderboard" />
+          </div>
+        )}
 
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 w-full">
           {/* Section Header */}
@@ -137,9 +150,6 @@ export const Home: React.FC = () => {
                 <div className="mb-10">
                   <HeroSkeleton />
                 </div>
-                <div className="my-10 hidden sm:block">
-                  <AdSpace format="leaderboard" />
-                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-8 pt-4">
                   {/* Add horizontal dividers via child classes */}
                   <GridSkeleton />
@@ -149,9 +159,6 @@ export const Home: React.FC = () => {
                 </div>
               </div>
               <aside className="col-span-12 lg:col-span-4 space-y-10">
-                <div>
-                  <AdSpace format="rectangle" />
-                </div>
                 <div className="bg-gray-50 p-6 border border-gray-100">
                   <div className="flex items-center space-x-2 mb-6 border-b border-gray-200 pb-3">
                     <TrendingUp className="text-red-700 text-opacity-50" size={20} />
@@ -189,9 +196,6 @@ export const Home: React.FC = () => {
                   <CompactSkeleton />
                   <CompactSkeleton />
                   <CompactSkeleton />
-                </div>
-                <div className="sticky top-24 pt-4">
-                  <AdSpace format="rectangle" />
                 </div>
               </aside>
             </div>
@@ -345,6 +349,13 @@ export const Home: React.FC = () => {
       </main>
 
       <Footer />
+
+      <NotificationBellModal 
+        isOpen={tickerBellOpen}
+        onClose={() => setTickerBellOpen(false)}
+        recentBreakingArticles={recentArticles}
+      />
     </div>
   );
 };
+
